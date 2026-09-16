@@ -40,11 +40,10 @@ export const dockerHubSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    if (!context.identity.username) {
-      return { status: 'skipped', reason: 'No username was provided' };
-    }
+    const primary = context.handles[0];
+    if (!primary) return { status: 'skipped', reason: 'No username to search for' };
 
-    const handle = reveal(context.identity.username);
+    const handle = primary.value;
 
     try {
       const user = await requestJson<DockerHubUser>(
@@ -84,7 +83,9 @@ export const dockerHubSource: Source = {
       emit.finding({
         id: 'dockerhub:profile',
         section: 'profiles',
-        title: 'A Docker Hub account exists with your username',
+        title: primary.derived
+          ? `Docker Hub has an account called ${handle}`
+          : 'A Docker Hub account exists with your username',
         provider: { id: 'dockerhub', label: 'Docker Hub', url: 'https://hub.docker.com' },
         origin: { name: 'Docker Hub', domain: 'hub.docker.com' },
         occurredAt:
@@ -96,6 +97,7 @@ export const dockerHubSource: Source = {
           signals,
           nameOnly: false,
           usernameOnly: !nameMatches,
+          derivedHandle: primary.derived,
         }),
         evidence: {
           url: `https://hub.docker.com/u/${encodeURIComponent(handle)}`,
@@ -103,15 +105,13 @@ export const dockerHubSource: Source = {
         },
         whyItMatters:
           published.length > 0
-            ? `This profile publishes ${publishedList} against a username you use elsewhere. ` +
-              'Individually none of that is secret; together they are enough to connect a technical handle to a real person at a real employer, which is how targeted phishing starts.'
-            : 'Docker Hub profiles are public. Even a sparse one confirms the username is in use and shows when the account was created.',
+            ? `Publishes ${publishedList}. Together that connects a technical handle to a real person at a real employer.`
+            : 'Public profile. Confirms the handle is in use and when it was created.',
         actions: [
           {
             type: 'review_privacy_settings',
-            label: 'Clear the profile fields you did not mean to publish',
-            detail:
-              'Name, company and location are all optional and can be emptied under Account Settings → Personal Information.',
+            label: 'Clear the optional profile fields',
+            detail: 'Name, company and location are all optional.',
             url: 'https://hub.docker.com/settings/general',
           },
           closeAccountAction('Docker Hub', 'hub.docker.com'),

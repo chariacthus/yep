@@ -18,6 +18,19 @@ import { Counter } from './Counter';
 
 const DONE: SourceStatus[] = ['ok', 'partial', 'failed', 'not_configured', 'rate_limited', 'skipped'];
 
+const tileIn = {
+  hidden: { opacity: 0, y: 10, scale: 0.96 },
+  shown: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring' as const, stiffness: 420, damping: 30 } },
+};
+
+/**
+ * The progress ring.
+ *
+ * Two arcs, not one: a solid arc for real progress, and a faint one that keeps
+ * sweeping regardless. The sweeping arc is what stops a stalled percentage —
+ * which happens whenever a slow site is holding the batch up — from reading as
+ * a frozen page.
+ */
 function Ring({ progress }: { progress: number }) {
   const reduced = useReducedMotion();
   const radius = 54;
@@ -25,14 +38,33 @@ function Ring({ progress }: { progress: number }) {
 
   return (
     <svg viewBox="0 0 128 128" className="h-32 w-32 -rotate-90" aria-hidden>
-      <circle
-        cx="64"
-        cy="64"
-        r={radius}
-        fill="none"
-        strokeWidth="6"
-        className="stroke-glass/12"
-      />
+      <defs>
+        <linearGradient id="ring-arc" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="rgb(var(--accent-soft))" />
+          <stop offset="100%" stopColor="rgb(var(--accent))" />
+        </linearGradient>
+      </defs>
+
+      <circle cx="64" cy="64" r={radius} fill="none" strokeWidth="6" className="stroke-glass/10" />
+
+      {!reduced ? (
+        <motion.circle
+          cx="64"
+          cy="64"
+          r={radius}
+          fill="none"
+          strokeWidth="6"
+          strokeLinecap="round"
+          className="stroke-accent/25"
+          style={{
+            strokeDasharray: `${circumference * 0.14} ${circumference}`,
+            transformOrigin: '64px 64px',
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2.2, repeat: Infinity, ease: 'linear' }}
+        />
+      ) : null}
+
       <motion.circle
         cx="64"
         cy="64"
@@ -40,11 +72,11 @@ function Ring({ progress }: { progress: number }) {
         fill="none"
         strokeWidth="6"
         strokeLinecap="round"
-        className="stroke-accent"
+        stroke="url(#ring-arc)"
         style={{ strokeDasharray: circumference }}
         initial={false}
         animate={{ strokeDashoffset: circumference * (1 - progress) }}
-        transition={reduced ? { duration: 0 } : { duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 26 }}
       />
     </svg>
   );
@@ -114,26 +146,31 @@ export function ScanningScreen({
         </AnimatePresence>
       </div>
 
-      <dl className="mt-8 flex flex-wrap items-stretch justify-center gap-2">
-        <div className="glass min-w-[7rem] px-4 py-3">
+      <motion.dl
+        className="mt-8 flex flex-wrap items-stretch justify-center gap-2"
+        initial={reduced ? false : 'hidden'}
+        animate="shown"
+        variants={{ shown: { transition: { staggerChildren: 0.07 } } }}
+      >
+        <motion.div variants={tileIn} className="glass min-w-[7rem] px-4 py-3">
           <dd className="text-[1.5rem] font-semibold leading-none">
             <Counter value={settled} />
             <span className="text-faint">/{coverage.length}</span>
           </dd>
           <dt className="mt-1.5 text-[0.75rem] text-faint">Services</dt>
-        </div>
+        </motion.div>
 
         {sweep ? (
-          <div className="glass min-w-[7rem] px-4 py-3">
+          <motion.div variants={tileIn} className="glass min-w-[7rem] px-4 py-3">
             <dd className="text-[1.5rem] font-semibold leading-none">
               <Counter value={sweep.done} />
               <span className="text-faint">/{sweep.total}</span>
             </dd>
             <dt className="mt-1.5 text-[0.75rem] text-faint">Sites</dt>
-          </div>
+          </motion.div>
         ) : null}
 
-        <div className="glass min-w-[7rem] px-4 py-3">
+        <motion.div variants={tileIn} className="glass min-w-[7rem] px-4 py-3">
           <dd
             className={`text-[1.5rem] font-semibold leading-none ${
               findingCount > 0 ? 'text-accent-soft' : ''
@@ -142,12 +179,11 @@ export function ScanningScreen({
             <Counter value={findingCount} />
           </dd>
           <dt className="mt-1.5 text-[0.75rem] text-faint">Found</dt>
-        </div>
-      </dl>
+        </motion.div>
+      </motion.dl>
 
-      <p className="mt-8 max-w-sm text-[0.8125rem] leading-relaxed text-faint">
-        Checking around seven hundred sites takes a moment. Results appear as they arrive — you can
-        start reading before it finishes.
+      <p className="mt-8 max-w-xs text-[0.8125rem] leading-relaxed text-faint">
+        Results appear as they arrive.
       </p>
     </div>
   );

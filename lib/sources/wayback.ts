@@ -47,11 +47,10 @@ export const waybackSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    if (!context.identity.username) {
-      return { status: 'skipped', reason: 'No username was provided' };
-    }
+    const primary = context.handles[0];
+    if (!primary) return { status: 'skipped', reason: 'No username to search for' };
 
-    const handle = reveal(context.identity.username);
+    const handle = primary.value;
     let checked = 0;
     let failures = 0;
 

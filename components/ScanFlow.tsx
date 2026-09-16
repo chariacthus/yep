@@ -111,6 +111,27 @@ export function ScanFlow() {
     setTrace((current) => [...current, line].slice(-MAX_TRACE_LINES));
   }, []);
 
+  const pendingProgress = useRef<Record<string, { done: number; total: number }>>({});
+  const progressFrame = useRef<number | null>(null);
+
+  const scheduleProgressFlush = useCallback(() => {
+    if (progressFrame.current !== null) return;
+    progressFrame.current = requestAnimationFrame(() => {
+      progressFrame.current = null;
+      const pending = pendingProgress.current;
+      pendingProgress.current = {};
+      if (Object.keys(pending).length === 0) return;
+      setProgress((current) => ({ ...current, ...pending }));
+    });
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (progressFrame.current !== null) cancelAnimationFrame(progressFrame.current);
+    },
+    [],
+  );
+
   const runScan = useCallback(async () => {
     setError(null);
     setBusy(true);
@@ -209,10 +230,11 @@ export function ScanFlow() {
             }
 
             case 'progress':
-              setProgress((current) => ({
-                ...current,
-                [event.id]: { done: event.done, total: event.total },
-              }));
+              // Buffered and flushed on an animation frame: the sweep emits
+              // these far faster than the screen refreshes, and applying each
+              // one separately re-rendered the whole tree for no visible gain.
+              pendingProgress.current[event.id] = { done: event.done, total: event.total };
+              scheduleProgressFlush();
               break;
 
             case 'finding':
@@ -256,7 +278,7 @@ export function ScanFlow() {
     } finally {
       setBusy(false);
     }
-  }, [email, name, username, locality, declined, pushTrace]);
+  }, [email, name, username, locality, declined, pushTrace, scheduleProgressFlush]);
 
   /** Re-scores a finding when the person answers "is this you?". */
   const applyVerdict = useCallback((finding: Finding, verdict: Verdict) => {
@@ -313,9 +335,8 @@ export function ScanFlow() {
               you are exposed
             </h1>
             <p className="mt-5 text-[1.0625rem] leading-relaxed text-muted">
-              Enter your own details. We check breach records, public profiles, archived pages and
-              around seven hundred websites, then explain what each result means and what you can do
-              about it. Nothing is stored — the report exists in this tab and nowhere else.
+              Breaches, social accounts, public profiles and old pages — across seven hundred sites.
+              Nothing is stored.
             </p>
           </header>
 
@@ -356,7 +377,7 @@ export function ScanFlow() {
                     placeholder="janeo"
                   />
                   <p className="mt-2 text-[0.75rem] leading-relaxed text-faint">
-                    Unlocks the seven-hundred-site sweep and the developer platforms.
+                    Optional — we also check handles taken from your address.
                   </p>
                 </div>
                 <div>
@@ -385,7 +406,7 @@ export function ScanFlow() {
                   placeholder="Bristol"
                 />
                 <p className="mt-2 text-[0.75rem] leading-relaxed text-faint">
-                  Only used to tell you apart from other people with your name.
+                  Tells you apart from others with your name.
                 </p>
               </div>
             </div>
@@ -399,8 +420,7 @@ export function ScanFlow() {
                   Services that receive your address
                 </h2>
                 <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted">
-                  Most checks send only a one-way hash. These need the address itself. Turn off any
-                  you would rather not use — the report will say they were skipped.
+                  Most checks send a one-way hash. These need the address itself.
                 </p>
                 <div className="mt-4 space-y-2">
                   {rawEmailSources.map((source) => (
@@ -449,8 +469,7 @@ export function ScanFlow() {
                 className="mt-0.5 h-4 w-4 accent-[rgb(var(--accent))]"
               />
               <span className="text-[0.9375rem] leading-relaxed text-muted">
-                These details are mine. I am not using this to look up another person, or for
-                employment, tenancy or credit screening.
+                These details are mine. Not for looking up other people, or for screening anyone.
               </span>
             </label>
 
@@ -528,27 +547,10 @@ export function ScanFlow() {
 
           {stage === 'report' ? (
             <div className="space-y-3">
-              {partial ? (
-                <div className="glass space-y-3 p-4 sm:p-5">
-                  <p className="text-[0.9375rem] leading-relaxed text-muted">
-                    <span className="font-medium text-warn">
-                      This scan was only partly completed.
-                    </span>{' '}
-                    At least one source could not be checked, so anything it might have found is
-                    unknown rather than absent. Do not read this as an all-clear.
-                  </p>
-                  <Explainer educationKey="coverage" />
-                </div>
-              ) : null}
-
               {withheld > 0 ? (
                 <p className="glass p-4 text-[0.9375rem] leading-relaxed text-muted sm:p-5">
-                  <span className="font-medium text-ink">
-                    {withheld} result{withheld === 1 ? ' was' : 's were'} withheld.
-                  </span>{' '}
-                  They come from categories — adult, dating, political, health — where being listed
-                  is revealing in itself. Because your email address was never verified, we cannot
-                  tell that you are the person being searched for, so these are not shown to anyone.
+                  <span className="font-medium text-ink">{withheld} withheld.</span> Adult, dating,
+                  political and health results stay hidden — we cannot confirm the address is yours.
                 </p>
               ) : null}
 
@@ -568,12 +570,9 @@ export function ScanFlow() {
 
           {findings.length === 0 && stage === 'report' ? (
             <div className="glass p-5 sm:p-6">
-              <p className="text-[1.0625rem] font-medium text-ink">
-                Nothing was found in the sources we checked.
-              </p>
+              <p className="text-[1.0625rem] font-medium text-ink">Nothing found.</p>
               <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted">
-                That is genuinely good news for those sources, but it is not the whole internet.
-                Open the coverage list above to see exactly what was checked.
+                Good news for the sources we checked — open Coverage to see which those were.
               </p>
             </div>
           ) : null}
@@ -584,7 +583,12 @@ export function ScanFlow() {
               if (!items || items.length === 0) return null;
 
               return (
-                <section key={section}>
+                <motion.section
+                  key={section}
+                  initial={reduced ? false : { opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+                >
                   <header className="mb-3 flex items-center gap-2.5 px-1">
                     <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">
                       {SECTION_LABELS[section]}
@@ -610,7 +614,7 @@ export function ScanFlow() {
                       ),
                     )}
                   </ul>
-                </section>
+                </motion.section>
               );
             })}
           </div>
@@ -622,8 +626,7 @@ export function ScanFlow() {
               <Explainer educationKey="confidence" />
               <Explainer educationKey="no_passwords" />
               <p className="px-1 pt-2 text-[0.8125rem] leading-relaxed text-faint">
-                This report exists only in this browser tab. Closing it discards everything — we
-                kept no copy.
+                This report lives in this tab only. Close it and it is gone.
               </p>
             </div>
           ) : null}

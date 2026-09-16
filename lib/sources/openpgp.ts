@@ -58,20 +58,18 @@ export const openPgpSource: Source = {
           label: 'View the key server entry',
         },
         whyItMatters:
-          'Someone — most likely you — published a public key against this address. That confirms the address is real and in use, which is exactly what makes it valuable to people compiling contact lists. Key servers are also designed to be hard to delete from.',
+          'A published key confirms this address is real and in use — exactly what makes it valuable to list compilers.',
         actions: [
           {
             type: 'review_account',
-            label: 'Remove the address from the key server if you no longer use it',
-            detail:
-              'keys.openpgp.org lets you unpublish the identity attached to a key by confirming ownership of the address.',
+            label: 'Unpublish the identity',
+            detail: 'keys.openpgp.org lets you remove it by confirming the address.',
             url: 'https://keys.openpgp.org/manage',
           },
           {
             type: 'review_account',
             label: 'Older key servers cannot be deleted from',
-            detail:
-              'keys.openpgp.org supports removal, but the older SKS network was designed to be append-only and has no delete. If your key is there too, the practical step is to publish a revocation certificate rather than to expect deletion.',
+            detail: 'The SKS network is append-only. Publish a revocation certificate instead.',
             url: 'https://keys.openpgp.org/about',
           },
         ],

@@ -56,8 +56,21 @@ export interface Corroboration {
   confirmedHosts: Set<string>;
 }
 
+/** A handle to search for, and where it came from. */
+export interface Handle {
+  value: string;
+  /** Derived handles came from the email address, not from the person. */
+  derived: boolean;
+}
+
 export interface ScanContext {
   identity: Identity;
+  /**
+   * Every handle worth searching: the one they typed, plus any derived from
+   * the local part of their address. Without this an email-only scan cannot
+   * reach the site sweep at all, which is where most social accounts are found.
+   */
+  handles: readonly Handle[];
   /** Shared, request-scoped findings from other sources. */
   corroboration: Corroboration;
   /** True once the person has proved they control the address. */
@@ -103,10 +116,16 @@ export function isConfigured(source: Source): boolean {
   return missingEnv(source).length === 0;
 }
 
-export function hasRequiredInput(source: Source, identity: Identity): boolean {
+export function hasRequiredInput(
+  source: Source,
+  identity: Identity,
+  handles: readonly Handle[] = [],
+): boolean {
   return source.requires.every((requirement) => {
     if (requirement === 'email') return Boolean(identity.emailNormalized);
-    if (requirement === 'username') return Boolean(identity.username);
+    // A handle derived from the address counts: it is the whole reason an
+    // email-only scan can find social accounts.
+    if (requirement === 'username') return handles.length > 0;
     return Boolean(identity.name);
   });
 }

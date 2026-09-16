@@ -43,21 +43,30 @@ async function collect(options: {
 
 const ALL_SOURCE_IDS = SOURCES.map((source) => source.id);
 
-describe('every source is accounted for', () => {
+/**
+ * Sources needing an API key this deployment does not have are left out of the
+ * scan entirely. They are not a gap in coverage — they were never part of it —
+ * and counting them made every run report itself as half-finished.
+ */
+const RUNNABLE_SOURCE_IDS = SOURCES.filter((source) => source.requiredEnv.length === 0).map(
+  (source) => source.id,
+);
+
+describe('every source that can run is accounted for', () => {
   it('appears in the coverage list whatever happened to it', async () => {
     const { coverage } = await collect({ declined: ALL_SOURCE_IDS });
 
-    expect(coverage).toHaveLength(SOURCES.length);
-    expect(coverage.map((entry) => entry.id).sort()).toEqual([...ALL_SOURCE_IDS].sort());
+    expect(coverage).toHaveLength(RUNNABLE_SOURCE_IDS.length);
+    expect(coverage.map((entry) => entry.id).sort()).toEqual([...RUNNABLE_SOURCE_IDS].sort());
   });
 
-  it('announces the full source list before any work starts', async () => {
+  it('announces the list before any work starts', async () => {
     const { events } = await collect({ declined: ALL_SOURCE_IDS });
     const started = events.find((event) => event.type === 'scan_started');
 
     expect(started?.type).toBe('scan_started');
     if (started?.type !== 'scan_started') throw new Error('unreachable');
-    expect(started.sources).toHaveLength(SOURCES.length);
+    expect(started.sources).toHaveLength(RUNNABLE_SOURCE_IDS.length);
   });
 });
 
@@ -76,39 +85,32 @@ describe('declining a source', () => {
   });
 });
 
-describe('an unconfigured source', () => {
-  it('says which environment variable is missing', async () => {
-    const { coverage } = await collect({ declined: ALL_SOURCE_IDS.filter((id) => id !== 'hibp') });
-    const entry = coverage.find((item) => item.id === 'hibp')!;
+describe('a source needing an API key nobody has', () => {
+  it('is left out of the scan rather than reported as a gap', async () => {
+    const { coverage } = await collect({ declined: ALL_SOURCE_IDS });
 
-    // HIBP has no key in the test environment.
-    expect(entry.status).toBe('not_configured');
-    expect(entry.detail).toContain('HIBP_API_KEY');
+    // HIBP's account lookup has no key in the test environment.
+    expect(coverage.find((entry) => entry.id === 'hibp')).toBeUndefined();
+    expect(coverage.some((entry) => entry.status === 'not_configured')).toBe(false);
   });
 
-  it('makes the whole scan partial', async () => {
-    const { partial } = await collect({ declined: ALL_SOURCE_IDS.filter((id) => id !== 'hibp') });
-    expect(partial).toBe(true);
+  it('does not on its own make a scan partial', async () => {
+    // Every runnable source declined, so the only reason to be partial would be
+    // the absent paid ones. Declining is itself a gap, so assert the reason.
+    const { coverage } = await collect({ declined: ALL_SOURCE_IDS });
+    expect(coverage.every((entry) => entry.status === 'skipped')).toBe(true);
   });
 });
 
 describe('a source with nothing to work on', () => {
-  it('is skipped with an explanation, and does not make the scan partial by itself', async () => {
-    // No username given, so the username sweep and archive lookup cannot run.
-    const { coverage } = await collect({ declined: ALL_SOURCE_IDS });
-    const usernames = coverage.find((item) => item.id === 'usernames')!;
-
-    // Declined takes precedence here; check the no-input path separately.
-    expect(['skipped']).toContain(usernames.status);
-  });
-
-  it('reports the missing input when the source was not declined', async () => {
-    const declined = ALL_SOURCE_IDS.filter((id) => id !== 'usernames');
+  it('is skipped with an explanation', async () => {
+    // The broker directory indexes people by name, and no name was given.
+    const declined = ALL_SOURCE_IDS.filter((id) => id !== 'brokers');
     const { coverage } = await collect({ declined });
-    const entry = coverage.find((item) => item.id === 'usernames')!;
+    const entry = coverage.find((item) => item.id === 'brokers')!;
 
     expect(entry.status).toBe('skipped');
-    expect(entry.detail).toMatch(/needs a username/i);
+    expect(entry.detail).toMatch(/name/i);
   });
 });
 
@@ -118,8 +120,21 @@ describe('a fully-declined scan', () => {
     const complete = events.find((event) => event.type === 'scan_complete');
 
     expect(complete).toBeDefined();
+    // Declining every source really is a gap, and must be reported as one.
     expect(partial).toBe(true);
     expect(coverage.every((entry) => entry.status !== 'pending')).toBe(true);
     expect(coverage.every((entry) => entry.status !== 'running')).toBe(true);
+  });
+});
+
+describe('handles derived from the email address', () => {
+  it('lets a scan with no username reach the username sources', async () => {
+    // Nothing but an address is given, yet the sweep still has something to
+    // search for — which is the whole point of deriving handles.
+    const declined = ALL_SOURCE_IDS.filter((id) => id !== 'usernames');
+    const { coverage } = await collect({ declined });
+    const entry = coverage.find((item) => item.id === 'usernames')!;
+
+    expect(entry.status).not.toBe('skipped');
   });
 });

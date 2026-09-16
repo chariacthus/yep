@@ -25,15 +25,16 @@ const CREDENTIAL_MARKERS = [
   '$2y$10$abcdefghijklmnopqrstuv',
 ];
 
-function contextFor(server: Server): ScanContext {
+function contextFor(_server: Server): ScanContext {
   return {
     identity: buildIdentity({ email: 'subject@example.test', username: 'subject' }),
+    handles: [{ value: 'subject', derived: false }],
     emailVerified: true,
     declinedSources: new Set(),
     corroboration: { confirmedHosts: new Set() },
     deadline: Date.now() + 10_000,
     signal: AbortSignal.timeout(10_000),
-  } satisfies ScanContext & Record<string, unknown> as ScanContext;
+  };
 }
 
 async function startServer(body: unknown): Promise<{ server: Server; base: string }> {
@@ -129,7 +130,7 @@ describe('XposedOrNot adapter', () => {
       expect(finding.occurredAt?.year).toBe(2019);
       // Describing how credentials were stored is a fact about the breach, not
       // a credential, and it changes how urgent the response is.
-      expect(finding.whyItMatters).toMatch(/without any protection/i);
+      expect(finding.whyItMatters).toMatch(/stored unprotected/i);
       expect(finding.educationKey).toBe('password_in_breach');
     } finally {
       delete process.env.XPOSEDORNOT_API_BASE;

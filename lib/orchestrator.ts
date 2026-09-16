@@ -1,7 +1,8 @@
 import { AsyncQueue } from './async-queue';
 import { randomId } from './crypto';
+import { deriveUsernames } from './identity-derive';
 import { logger } from './logger';
-import type { Identity } from './identity';
+import { reveal, type Identity } from './identity';
 import type { Finding, RemovalOpportunity } from './normalize/finding';
 import { PRIMING_SOURCE_IDS, SOURCES } from './sources/registry';
 import {
@@ -9,6 +10,7 @@ import {
   isConfigured,
   missingEnv,
   type Corroboration,
+  type Handle,
   type ScanContext,
   type Source,
   type SourceOutcome,
@@ -145,7 +147,11 @@ function describeOutcome(outcome: SourceOutcome): {
  * up front means the UI can show the full source list with accurate statuses
  * from the first frame rather than filling in as it goes.
  */
-function precheck(source: Source, options: ScanOptions): SourceOutcome | null {
+function precheck(
+  source: Source,
+  options: ScanOptions,
+  handles: readonly Handle[],
+): SourceOutcome | null {
   if (options.declinedSources.has(source.id)) {
     return {
       status: 'skipped',
@@ -156,7 +162,7 @@ function precheck(source: Source, options: ScanOptions): SourceOutcome | null {
   if (!isConfigured(source)) {
     return { status: 'not_configured', missing: missingEnv(source) };
   }
-  if (!hasRequiredInput(source, options.identity)) {
+  if (!hasRequiredInput(source, options.identity, handles)) {
     const needed = source.requires.join(' and ');
     return {
       status: 'skipped',
@@ -190,12 +196,28 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
   const deadline = started + options.budgetMs;
   const controller = new AbortController();
 
+  // The handle they typed, then any derived from their address. An email-only
+  // scan would otherwise skip every username source, which is most of them.
+  const given = options.identity.username ? reveal(options.identity.username).trim() : '';
+  const handles: Handle[] = given ? [{ value: given, derived: false }] : [];
+  for (const candidate of deriveUsernames(reveal(options.identity.emailNormalized))) {
+    if (!handles.some((handle) => handle.value.toLowerCase() === candidate.value)) {
+      handles.push({ value: candidate.value, derived: true });
+    }
+  }
+
   const corroboration: Corroboration = { confirmedHosts: new Set() };
   const coverage = new Map<string, CoverageEntry>();
   const prechecked = new Map<string, SourceOutcome>();
 
-  for (const source of SOURCES) {
-    const skip = precheck(source, options);
+  // Sources needing a key this deployment does not have are left out entirely
+  // rather than reported as unchecked. They are not a hole in the scan — they
+  // were never part of it — and listing them made every run look half-finished.
+  // /about/sources still lists them, so nothing is hidden.
+  const applicable = SOURCES.filter((source) => isConfigured(source));
+
+  for (const source of applicable) {
+    const skip = precheck(source, options, handles);
     if (skip) {
       const described = describeOutcome(skip);
       coverage.set(
@@ -210,7 +232,7 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
 
   yield { type: 'scan_started', scanId, sources: [...coverage.values()] };
 
-  const runnable = SOURCES.filter((source) => !prechecked.has(source.id));
+  const runnable = applicable.filter((source) => !prechecked.has(source.id));
 
   // Events are pushed onto a queue and drained as they arrive, so a long sweep
   // streams its results and its progress counter live instead of appearing all
@@ -226,6 +248,7 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
   const runSource = async (source: Source): Promise<void> => {
     const context: ScanContext = {
       identity: options.identity,
+      handles,
       emailVerified: options.emailVerified,
       declinedSources: options.declinedSources,
       corroboration,
@@ -327,20 +350,18 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
 
   const entries = [...coverage.values()];
 
-  // "Partial" means something that could have been checked was not. A source
-  // with no applicable input — no username given, say — could never have run,
-  // so it does not count. An unconfigured, failed, rate-limited or declined one
-  // does: in every one of those cases there is a gap the person should know
-  // about before reading the report as an all-clear.
-  const partial = entries.some((entry) => {
+  // Only a real gap counts: a source that was reachable and did not finish, or
+  // one the person switched off. A source with nothing to work on could never
+  // have run, and an unconfigured one is not in this list at all.
+  const incomplete = entries.filter((entry) => {
     if (entry.status === 'skipped') return entry.because === 'declined';
-    return (['partial', 'failed', 'rate_limited', 'not_configured'] as SourceStatus[]).includes(
-      entry.status,
-    );
+    return (['partial', 'failed', 'rate_limited'] as SourceStatus[]).includes(entry.status);
   });
+  const partial = incomplete.length > 0;
 
   logger.info('Scan complete', {
     scanId,
+    sourcesRun: applicable.length,
     durationMs: Date.now() - started,
     findings: findingCount,
     withheld: withheldCount,

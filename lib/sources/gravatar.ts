@@ -108,16 +108,15 @@ export const gravatarSource: Source = {
           ? { url: profile.profile_url, label: 'View your Gravatar profile' }
           : undefined,
         whyItMatters:
-          'Gravatar profiles are public and are looked up by a hash of your email address, which means any site you have commented on can retrieve this profile. ' +
+          'Looked up by a hash of your address, so any site you have commented on can fetch it. ' +
           (linked.length > 0
-            ? `Yours publicly links ${linked.length} other account${linked.length === 1 ? '' : 's'}, which ties those identities together.`
-            : 'Yours is currently minimal.'),
+            ? `Yours links ${linked.length} other account${linked.length === 1 ? '' : 's'}.`
+            : 'Yours is minimal.'),
         actions: [
           {
             type: 'review_privacy_settings',
-            label: 'Review what your Gravatar profile shows',
-            detail:
-              'Gravatar lets you hide profile fields and unlink connected accounts. Anything left visible is readable by anyone who knows your address.',
+            label: 'Hide your profile fields',
+            detail: 'Anything visible is readable by anyone who knows your address.',
             url: 'https://gravatar.com/profile',
           },
           closeAccountAction('Gravatar', 'gravatar.com'),
@@ -142,12 +141,12 @@ export const gravatarSource: Source = {
           }),
           evidence: account.url ? { url: account.url, label: 'Open the linked profile' } : undefined,
           whyItMatters:
-            'You verified this account on Gravatar, so it is publicly and provably connected to your email address. Anyone who finds one can find the other.',
+            'Verified on Gravatar, so this account and your address are provably linked.',
           actions: [
             {
               type: 'review_privacy_settings',
-              label: 'Unlink it if you did not mean it to be public',
-              detail: 'Verified accounts can be removed from your Gravatar profile at any time.',
+              label: 'Unlink it',
+              detail: 'Verified accounts can be removed at any time.',
               url: 'https://gravatar.com/profile',
             },
           ],

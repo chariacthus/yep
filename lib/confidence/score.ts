@@ -26,6 +26,11 @@ export interface ScoreInput {
   nameOnly: boolean;
   /** True when the only identifier is a username. */
   usernameOnly?: boolean;
+  /**
+   * The handle was derived from the email address rather than given. That makes
+   * it a lead worth showing, never a claim about the person.
+   */
+  derivedHandle?: boolean;
   /** Set by the person's own answer to "Is this you?". */
   userVerdict?: 'confirmed' | 'rejected';
 }
@@ -46,6 +51,18 @@ const CORROBORATING: ReadonlySet<SignalId> = new Set([
 
 export function assessConfidence(input: ScoreInput): ConfidenceAssessment {
   const signals: Signal[] = input.signals.map((id) => signal(id));
+
+  if (input.derivedHandle) {
+    // "Matched the username you entered" is simply untrue when we guessed the
+    // handle, so the explanation is corrected rather than contradicted by the
+    // line that follows it.
+    for (const item of signals) {
+      if (item.id === 'username_exact') {
+        item.explanation = 'Matched a handle taken from your email address';
+      }
+    }
+    signals.push(signal('derived_handle'));
+  }
 
   // The common-name penalty is computed from real frequency data rather than
   // being a fixed constant, so rare names are not punished.
@@ -83,6 +100,13 @@ export function assessConfidence(input: ScoreInput): ConfidenceAssessment {
       level = 'likely';
       cappedBy = 'Usernames are not unique, so this cannot be confirmed automatically.';
     }
+  }
+
+  // A handle we guessed can never rise above "possible", whatever else lines
+  // up. Nobody told us it was theirs.
+  if (input.derivedHandle) {
+    level = 'possible';
+    cappedBy = 'This handle came from your email address — nobody confirmed it is yours.';
   }
 
   // Cap 3: only an exact match on an identifier that was actually entered can be

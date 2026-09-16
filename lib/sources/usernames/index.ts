@@ -1,4 +1,3 @@
-import { reveal } from '../../identity';
 import { assessConfidence } from '../../confidence/score';
 import type { Finding } from '../../normalize/finding';
 import type { SignalId } from '../../confidence/signals';
@@ -53,11 +52,9 @@ export const usernameSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    if (!context.identity.username) {
-      return { status: 'skipped', reason: 'No username was provided' };
+    if (context.handles.length === 0) {
+      return { status: 'skipped', reason: 'No username to search for' };
     }
-
-    const handle = reveal(context.identity.username);
 
     // A dedicated adapter reports these hosts in far more detail, so letting the
     // sweep report them as well would duplicate every one of them with a worse
@@ -65,7 +62,10 @@ export const usernameSource: Source = {
     const sites = prepareSites().filter(
       (site) => !HOSTS_WITH_DEDICATED_SOURCES.has(site.host.replace(/^www\./, '')),
     );
-    const total = sites.length;
+
+    // Every handle gets the full sweep. Searching only the first would mean an
+    // email-only scan checked `john.smith` and never `johnsmith`.
+    const total = sites.length * context.handles.length;
 
     let completed = 0;
     let found = 0;
@@ -77,7 +77,8 @@ export const usernameSource: Source = {
     // ownership was never proved. Counted so the report can say so.
     let withheld = 0;
 
-    const results = probeAll(sites, handle, {
+    for (const currentHandle of context.handles) {
+    const results = probeAll(sites, currentHandle.value, {
       concurrency: concurrency(),
       timeoutMs: PROBE_TIMEOUT_MS,
       deadline: context.deadline,
@@ -86,7 +87,9 @@ export const usernameSource: Source = {
 
     for await (const result of results) {
       completed += 1;
-      if (completed % 10 === 0 || completed === total) emit.progress(completed, total);
+      // Every 25 probes is still smoother than the eye can follow, and a
+      // quarter of the events.
+      if (completed % 25 === 0 || completed === total) emit.progress(completed, total);
 
       if (result.verdict === 'indeterminate') indeterminate += 1;
       if (result.verdict !== 'found') continue;
@@ -112,9 +115,11 @@ export const usernameSource: Source = {
       if (site.unreliable) signals.push('low_reliability_source');
 
       emit.finding({
-        id: `wmn:${site.name}`,
+        id: `wmn:${site.name}:${currentHandle.value}`,
         section: 'usernames',
-        title: `An account exists on ${site.name} with your username`,
+        title: currentHandle.derived
+          ? `${site.name} has an account called ${currentHandle.value}`
+          : `An account exists on ${site.name} with your username`,
         provider: {
           id: 'usernames',
           label: 'WhatsMyName',
@@ -126,13 +131,15 @@ export const usernameSource: Source = {
           signals,
           nameOnly: false,
           usernameOnly: !corroborated,
+          // A handle taken from an address is a lead, not an identifier.
+          derivedHandle: currentHandle.derived,
         }),
         evidence: result.profileUrl ? { url: result.profileUrl, label: 'Open the profile' } : undefined,
-        whyItMatters:
-          'Someone is using this username here. Reusing one username across services lets anyone link those accounts together in seconds, including accounts you may think of as separate from your real identity. ' +
-          (corroborated
+        whyItMatters: currentHandle.derived
+          ? `This handle comes from your email address, not from you — we have not confirmed it is yours. Worth a look if you recognise it.`
+          : corroborated
             ? 'You have publicly linked this site to your email address elsewhere, so this one is almost certainly yours.'
-            : 'Usernames are not unique, so this may belong to somebody else — check before acting on it.'),
+            : 'Usernames are not unique, so this may be someone else.',
         actions: [
           {
             type: 'review_account',
@@ -159,6 +166,8 @@ export const usernameSource: Source = {
         },
       });
       found += 1;
+    }
+
     }
 
     emit.progress(completed, total);

@@ -35,11 +35,10 @@ export const bitbucketSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    if (!context.identity.username) {
-      return { status: 'skipped', reason: 'No username was provided' };
-    }
+    const primary = context.handles[0];
+    if (!primary) return { status: 'skipped', reason: 'No username to search for' };
 
-    const handle = reveal(context.identity.username);
+    const handle = primary.value;
 
     try {
       const workspace = await requestJson<Workspace>(
@@ -60,7 +59,9 @@ export const bitbucketSource: Source = {
       emit.finding({
         id: 'bitbucket:workspace',
         section: 'profiles',
-        title: 'A Bitbucket workspace exists with your username',
+        title: primary.derived
+          ? `Bitbucket has a workspace called ${handle}`
+          : 'A Bitbucket workspace exists with your username',
         provider: { id: 'bitbucket', label: 'Bitbucket', url: 'https://bitbucket.org' },
         origin: { name: 'Bitbucket', domain: 'bitbucket.org' },
         dataTypes: nameMatches ? ['username', 'social_profile', 'name'] : ['username', 'social_profile'],
@@ -68,20 +69,18 @@ export const bitbucketSource: Source = {
           signals,
           nameOnly: false,
           usernameOnly: !nameMatches,
+          derivedHandle: primary.derived,
         }),
         evidence: {
           url: `https://bitbucket.org/${encodeURIComponent(handle)}/`,
           label: 'View the workspace',
         },
-        whyItMatters:
-          `The workspace is named "${workspace.name ?? handle}" and is readable by anyone who guesses the slug. ` +
-          'Any repository left public inside it is readable too, along with its commit history and the addresses in it.',
+        whyItMatters: `Named "${workspace.name ?? handle}". Any public repository inside it is readable, commit history included.`,
         actions: [
           {
             type: 'review_account',
-            label: 'Check which repositories in this workspace are public',
-            detail:
-              'Repository visibility is per-repository on Bitbucket; a private workspace can still contain public repositories.',
+            label: 'Check repository visibility',
+            detail: 'A private workspace can still contain public repositories.',
             url: `https://bitbucket.org/${encodeURIComponent(handle)}/workspace/repositories/`,
           },
           closeAccountAction('Bitbucket', 'bitbucket.org'),

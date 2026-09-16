@@ -28,6 +28,7 @@ function context(username: string, overrides: Partial<{ email: string; name: str
       username,
       name: overrides.name,
     }),
+    handles: [{ value: username, derived: false }],
     emailVerified: false,
     declinedSources: new Set(),
     corroboration: { confirmedHosts: new Set() },
@@ -238,9 +239,9 @@ describe('Bitbucket', () => {
 });
 
 describe('every profile source', () => {
-  it('skips cleanly when no username was given', async () => {
+  it('skips cleanly when there is no handle to search', async () => {
     const identity = buildIdentity({ email: 'subject@example.test' });
-    const ctx: ScanContext = { ...context('x'), identity };
+    const ctx: ScanContext = { ...context('x'), identity, handles: [] };
 
     for (const source of [gitlabSource, dockerHubSource, npmSource, bitbucketSource]) {
       const { outcome } = await collect(source, ctx);

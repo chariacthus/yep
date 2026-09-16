@@ -148,6 +148,7 @@ function buildFinding(
   handle: string,
   enteredEmail: string,
   context: ScanContext,
+  derivedHandle: boolean,
 ): Finding {
   const emailMatches = Boolean(
     hit.publishedEmail && hit.publishedEmail.trim().toLowerCase() === enteredEmail,
@@ -174,23 +175,21 @@ function buildFinding(
     );
   } else {
     details.push(
-      `An account exists under this handle, though it currently publishes nothing.`,
+      'An account exists under this handle but publishes nothing.',
     );
   }
   if (hit.publishedEmail) {
     details.push(
-      `The profile publishes an email address (${presentEmail(hit.publishedEmail, enteredEmail)}) where anyone can read it — published addresses get scraped for spam and phishing.`,
+      `Publishes ${presentEmail(hit.publishedEmail, enteredEmail)} — scraped addresses get spam and phishing.`,
     );
   }
   if (hit.linkedAccounts?.length) {
     details.push(
-      `It also links to ${hit.linkedAccounts.map((account) => account.label).join(', ')}, tying those identities together publicly.`,
+      `Links to ${hit.linkedAccounts.map((account) => account.label).join(', ')}.`,
     );
   }
   if (publishes) {
-    details.push(
-      'Published package versions are immutable: the author details inside them cannot be edited after release, which makes this one of the few exposures that genuinely cannot be undone.',
-    );
+    details.push('Published versions are immutable — the author details in them cannot be edited.');
   }
 
   const actions: Action[] = [
@@ -231,9 +230,13 @@ function buildFinding(
   return {
     id: `registry:${spec.id}`,
     section: 'profiles',
-    title: publishes
-      ? `You publish ${hit.packageCount} package${hit.packageCount === 1 ? '' : 's'} on ${spec.label}`
-      : `An account exists on ${spec.label} with your username`,
+    title: derivedHandle
+      ? publishes
+        ? `${handle} publishes ${hit.packageCount} package${hit.packageCount === 1 ? '' : 's'} on ${spec.label}`
+        : `${spec.label} has an account called ${handle}`
+      : publishes
+        ? `You publish ${hit.packageCount} package${hit.packageCount === 1 ? '' : 's'} on ${spec.label}`
+        : `An account exists on ${spec.label} with your username`,
     provider: { id: spec.id, label: spec.label, url: spec.homepage },
     origin: { name: spec.label, domain: spec.domain },
     dataTypes,
@@ -241,6 +244,7 @@ function buildFinding(
       signals,
       nameOnly: false,
       usernameOnly: !emailMatches,
+      derivedHandle,
     }),
     evidence: { url: spec.profileUrl(handle), label: `View the ${spec.label} profile` },
     whyItMatters: details.join(' '),
@@ -261,11 +265,10 @@ function makeSource(spec: RegistrySpec): Source {
     requiredEnv: [],
 
     async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-      if (!context.identity.username) {
-        return { status: 'skipped', reason: 'No username was provided' };
-      }
+      const primary = context.handles[0];
+      if (!primary) return { status: 'skipped', reason: 'No username to search for' };
 
-      const handle = reveal(context.identity.username);
+      const handle = primary.value;
       const base = process.env[spec.envBase] ?? spec.defaultBase;
 
       try {
@@ -282,7 +285,14 @@ function makeSource(spec: RegistrySpec): Source {
         if (!hit) return { status: 'ok', checked: 0 };
 
         emit.finding(
-          buildFinding(spec, hit, handle, reveal(context.identity.emailNormalized), context),
+          buildFinding(
+            spec,
+            hit,
+            handle,
+            reveal(context.identity.emailNormalized),
+            context,
+            primary.derived,
+          ),
         );
         return { status: 'ok', checked: 1 };
       } catch (error) {

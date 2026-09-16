@@ -45,11 +45,10 @@ export const gitlabSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    if (!context.identity.username) {
-      return { status: 'skipped', reason: 'No username was provided' };
-    }
+    const primary = context.handles[0];
+    if (!primary) return { status: 'skipped', reason: 'No username to search for' };
 
-    const handle = reveal(context.identity.username);
+    const handle = primary.value;
     const entered = reveal(context.identity.emailNormalized);
 
     try {
@@ -85,7 +84,9 @@ export const gitlabSource: Source = {
       emit.finding({
         id: 'gitlab:profile',
         section: 'profiles',
-        title: 'A GitLab account exists with your username',
+        title: primary.derived
+          ? `GitLab has an account called ${handle}`
+          : 'A GitLab account exists with your username',
         provider: { id: 'gitlab', label: 'GitLab', url: 'https://gitlab.com' },
         origin: { name: 'GitLab', domain: 'gitlab.com' },
         dataTypes,
@@ -93,21 +94,20 @@ export const gitlabSource: Source = {
           signals,
           nameOnly: false,
           usernameOnly: !emailMatches && !nameMatches,
+          derivedHandle: primary.derived,
         }),
         evidence: user.web_url ? { url: user.web_url, label: 'View the profile' } : undefined,
         whyItMatters: publishedEmail
-          ? `This profile publishes an email address (${presentEmail(publishedEmail, entered)}) on a page anyone can read. ` +
-            'Published addresses get scraped for spam and phishing, and they tie this account permanently to that address. ' +
+          ? `Publishes ${presentEmail(publishedEmail, entered)} where anyone can read it. ` +
             (emailMatches
-              ? 'It is the address you are scanning, so this profile and everything else under that address are publicly connected.'
-              : 'It is not the address you entered, so this may be a second address of yours — or a different person with the same username.')
-          : 'GitLab profiles are public, including the name, avatar and activity. Commit history under this account is also readable, and can expose an email address you did not intend to publish.',
+              ? 'That is the address you are scanning, so this account and it are publicly linked.'
+              : 'Not the address you entered — a second account of yours, or someone else.')
+          : 'Public profile. Commit history can expose an email you did not mean to publish.',
         actions: [
           {
             type: 'review_privacy_settings',
-            label: 'Check what your GitLab profile publishes',
-            detail:
-              'The public email field can be cleared, and GitLab can hide your activity. Both are under Preferences → Profile.',
+            label: 'Clear your public email',
+            detail: 'Clear the public email field and hide your activity under Preferences.',
             url: 'https://gitlab.com/-/profile',
           },
           closeAccountAction('GitLab', 'gitlab.com'),

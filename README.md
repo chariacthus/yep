@@ -15,8 +15,8 @@ It is built around five rules that shaped nearly every technical decision here:
    A name-only match is never presented as the person.
 4. **Never retain.** There is no database. The submitted identity lives in one
    request and the report lives in the browser tab.
-5. **Never withhold silently.** Results that are held back, sources that could
-   not be reached and sites that gave no answer are all counted and reported.
+5. **Never withhold silently.** Results held back, sources that could not be
+   reached and sites that gave no answer are all counted and reported.
 
 ## Quick start
 
@@ -28,10 +28,16 @@ npm run dev
 Then open <http://localhost:3000>. That is the whole setup — no `.env` file, no
 account, no email service, no API keys, no cost.
 
-Eleven of the fifteen sources run with no configuration at all. The other four
-need a paid key and report themselves as "not set up" in the report rather than
-failing quietly, so a scan without them is still useful and still honest about
-what it could not reach.
+**You do not need a username.** Handles are derived from the local part of your
+address (`john.smith@…` → `john.smith`, `johnsmith`) and swept across all ~700
+sites, so an email-only scan still finds social and developer accounts. Anything
+found that way is labelled as a guess and capped at *possible*, because nobody
+confirmed the handle is yours.
+
+Seventeen of the nineteen sources run with no configuration at all. The two that
+need a paid key are simply left out of the scan rather than reported as gaps —
+they were never part of it, and counting them made every run look half-finished.
+`/about/sources` still lists them.
 
 For a real deployment, set `APP_SECRET` to a random value
 (`openssl rand -base64 32`). Without it the app generates a temporary one per

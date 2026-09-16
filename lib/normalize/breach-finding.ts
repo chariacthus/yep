@@ -58,54 +58,40 @@ function buildActions(
   if (hasCredentials) {
     actions.push({
       type: 'change_password',
-      label: 'Change this password everywhere you used it',
-      detail:
-        `Change your ${siteName} password, then change it on every other account where you used the same password or a close variant. ` +
-        'Attackers replay stolen credentials against other services automatically — that is how one old breach becomes a compromised email account.',
+      label: 'Change this password everywhere you reused it',
+      detail: 'Attackers replay stolen credentials against other sites automatically.',
       url: domain ? `https://${domain}` : undefined,
     });
     actions.push({
       type: 'enable_2fa',
       label: 'Turn on two-factor authentication',
-      detail:
-        'This makes a stolen password insufficient on its own. Do your email account first: whoever controls it can reset the password on everything else you own.',
+      detail: 'Start with your email — it can reset everything else.',
     });
   }
 
   if (dataTypes.includes('financial')) {
     actions.push({
       type: 'review_account',
-      label: 'Watch for card and bank fraud',
-      detail:
-        'Financial details were part of this breach. Check recent statements, and consider asking your bank for a new card number if the breach is recent.',
+      label: 'Check your statements',
+      detail: 'Card details were taken. Ask your bank for a new number if this was recent.',
     });
   }
 
   if (dataTypes.includes('government_id')) {
     actions.push({
       type: 'review_account',
-      label: 'Treat this as an identity-theft risk',
-      detail:
-        'Government identifiers cannot be changed like a password. Consider a credit freeze or fraud alert with the credit bureaus in your country.',
+      label: 'Consider a credit freeze',
+      detail: 'ID numbers cannot be changed like a password.',
     });
   }
 
   if (dataTypes.includes('physical_address') || dataTypes.includes('phone')) {
     actions.push({
       type: 'review_account',
-      label: 'Expect targeted phishing and calls',
-      detail:
-        'Address and phone details make a scam far more convincing, because the caller can prove they know things about you. Treat unexpected contact that cites personal details as a red flag rather than a reassurance.',
+      label: 'Expect convincing phishing',
+      detail: 'Knowing your address makes a scam call believable. Treat that as a warning sign.',
     });
   }
-
-  // Being honest about what cannot be fixed is more useful than implying it can.
-  actions.push({
-    type: 'review_account',
-    label: 'The breached copy itself cannot be recalled',
-    detail:
-      'Data that has already leaked circulates indefinitely and gets compiled into larger collections. Nothing below deletes it. What the steps here do is cut off what that data can still be used for, and stop this company adding to it.',
-  });
 
   actions.push(closeAccountAction(siteName, domain));
   actions.push(legalErasureAction(siteName, domain ? `https://${domain}` : undefined));
@@ -114,9 +100,8 @@ function buildActions(
   if (record?.isRetired) {
     actions.push({
       type: 'review_account',
-      label: 'This breach has been retired',
-      detail:
-        'HIBP has since withdrawn this breach, usually because the data turned out to be fabricated or recycled from elsewhere. Treat it as low priority.',
+      label: 'Low priority — this breach was withdrawn',
+      detail: 'HIBP retired it, usually because the data turned out to be fake or recycled.',
     });
   }
 
@@ -127,11 +112,11 @@ function buildActions(
 function credentialStorageNote(risk: string | undefined): string | null {
   switch (risk?.toLowerCase()) {
     case 'plaintext':
-      return 'The passwords in this breach were stored without any protection, so they were readable the moment the data was taken. Treat that password as fully known.';
+      return 'Passwords were stored unprotected — treat yours as fully known.';
     case 'easytocrack':
-      return 'The passwords were stored with weak protection and are very likely to have been recovered by now.';
+      return 'Passwords were weakly protected and have likely been cracked.';
     case 'hardtocrack':
-      return 'The passwords were stored with strong protection, which slows attackers down considerably — but it does not make the breach harmless, and a weak password is still recoverable.';
+      return 'Passwords were strongly protected, which buys time but is not safety.';
     default:
       return null;
   }
@@ -146,35 +131,20 @@ function buildWhyItMatters(
   const parts: string[] = [];
 
   if (record) {
-    if (record.pwnCount) {
-      parts.push(
-        `${formatCount(record.pwnCount)} accounts were exposed in this breach${
-          record.breachDate ? ` of ${new Date(record.breachDate).getFullYear()}` : ''
-        }.`,
-      );
-    }
-    if (record.description) parts.push(record.description.slice(0, 700));
-    if (!record.isVerified) {
-      parts.push(
-        'This breach is unconfirmed: the data is circulating but has not been verified as genuinely coming from this company, so treat it with some caution.',
-      );
-    }
+    if (record.pwnCount) parts.push(`${formatCount(record.pwnCount)} accounts exposed.`);
+    if (record.description) parts.push(record.description.slice(0, 340));
+    if (!record.isVerified) parts.push('Unconfirmed — the data circulates but was never verified.');
   } else if (fallbackDescription) {
-    parts.push(fallbackDescription.slice(0, 700));
+    parts.push(fallbackDescription.slice(0, 340));
   }
 
   if (parts.length === 0) {
-    parts.push(
-      'Your address appears in data taken from this service. Once breached data is out it circulates indefinitely, gets compiled into larger collections, and cannot be recalled.',
-    );
+    parts.push('Your address appears in data taken from this service.');
   }
 
   if (dataTypes.includes('password_credential')) {
     const storage = credentialStorageNote(credentialStorage);
-    parts.push(
-      storage ??
-        'Credentials were part of what was taken, which is why the actions below start with changing that password anywhere you reused it.',
-    );
+    if (storage) parts.push(storage);
   }
 
   return parts.join(' ');

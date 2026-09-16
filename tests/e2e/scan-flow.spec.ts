@@ -50,16 +50,16 @@ test('a person can scan without any email step and gets an honest report', async
   // Exactly one top-level heading, whatever stage we are in.
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
 
-  // With no keys configured, the report must say so rather than implying a
-  // clean result.
-  await expect(page.getByText(/only partly completed/)).toBeVisible();
+  // Coverage is stated as a count rather than a warning banner. Sources needing
+  // a key nobody has are left out of the scan entirely, so the number reflects
+  // what could actually run.
   await expect(page.getByText(/\d+ of \d+ sources checked/)).toBeVisible();
 
-  // Ownership was asserted, not proved, and the report must say so.
-  await expect(page.getByText(/taken your word for it/)).toBeVisible();
+  // Ownership was asserted, not proved, and the report still says so.
+  await expect(page.getByText(/took your word/)).toBeVisible();
 
   // Broker entries must never be presented as detections.
-  await expect(page.getByText('This is not a detection.')).toBeVisible();
+  await expect(page.getByText('Not a detection.')).toBeVisible();
   await expect(page.getByRole('link', { name: /Open the official DROP platform/ })).toBeVisible();
 
   // Nothing in the report may look like a credential.

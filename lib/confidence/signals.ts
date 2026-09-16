@@ -34,6 +34,7 @@ export type SignalId =
   | 'name_plus_locality'
   | 'common_name_penalty'
   | 'low_reliability_source'
+  | 'derived_handle'
   | 'user_confirmed'
   | 'user_rejected';
 
@@ -63,6 +64,7 @@ export const SIGNAL_WEIGHTS: Record<SignalId, number> = {
   name_plus_locality: 12,
   common_name_penalty: 0, // computed per-name from frequency data, always ≤ 0
   low_reliability_source: -10,
+  derived_handle: -15,
   user_confirmed: 0, // handled by an override, not the score
   user_rejected: 0,
 };
@@ -78,6 +80,7 @@ const EXPLANATIONS: Record<SignalId, string> = {
   name_plus_locality: 'Matched your name together with your location',
   common_name_penalty: 'This is a common name, so this may well be someone else',
   low_reliability_source: 'This site’s detection is unreliable, so the result may be wrong',
+  derived_handle: 'We guessed this handle from your email address — you never told us it was yours',
   user_confirmed: 'You confirmed this is you',
   user_rejected: 'You said this is not you',
 };
@@ -111,5 +114,4 @@ export const CONFIDENCE_DESCRIPTIONS: Record<ConfidenceLevel, string> = {
  * that used to be (wrongly) folded into every finding's confidence level.
  */
 export const OWNERSHIP_CAVEAT =
-  'You told us these details are yours, and we have taken your word for it. ' +
-  'Read this as a report about the email address and username you entered, rather than proof about you.';
+  'This is a report about the details you entered — we took your word that they are yours.';

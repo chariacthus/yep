@@ -30,11 +30,9 @@ export function RemovalSection({ opportunities }: { opportunities: RemovalOpport
       </header>
 
       <p className="glass p-4 text-[0.9375rem] leading-relaxed text-muted sm:p-5">
-        <span className="font-medium text-ink">This is not a detection.</span> We have not checked
-        whether you are listed on these sites, and we will not — confirming a listing means
-        searching a people-search site for a named person, which is exactly the thing this tool
-        exists to help you undo. These are brokers known to compile records of the kind your scan
-        surfaced, with a working way to opt out of each.
+        <span className="font-medium text-ink">Not a detection.</span> Confirming a listing means
+        searching a people-search site for a named person — the thing this tool exists to undo. These
+        are brokers who hold data like yours, each with a working opt-out.
       </p>
 
       <div className="glass-strong space-y-3 p-5 sm:p-6">
@@ -42,9 +40,8 @@ export function RemovalSection({ opportunities }: { opportunities: RemovalOpport
           Start here if you live in California
         </p>
         <p className="text-[0.9375rem] leading-relaxed text-muted">
-          California&apos;s DROP platform lets you submit one verified request that legally requires
-          every data broker registered in the state to delete what they hold about you, and to keep
-          doing so. It replaces hundreds of individual opt-out forms with a single request.
+          One verified request legally forces every broker registered in California to delete what
+          they hold — replacing hundreds of opt-out forms.
         </p>
         <a
           href="https://cppa.ca.gov/data_brokers/"
@@ -55,8 +52,7 @@ export function RemovalSection({ opportunities }: { opportunities: RemovalOpport
           Open the official DROP platform →
         </a>
         <p className="text-[0.75rem] leading-relaxed text-faint">
-          We link rather than submitting for you: there is no third-party API for DROP, and acting
-          as your agent would mean holding your identity documents.
+          We link rather than submit — acting as your agent would mean holding your ID.
         </p>
         <Explainer educationKey="drop" />
       </div>

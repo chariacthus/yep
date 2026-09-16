@@ -46,11 +46,11 @@ export const githubSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    const username = context.identity.username;
-    if (!username) return { status: 'skipped', reason: 'No username was provided' };
+    const primary = context.handles[0];
+    if (!primary) return { status: 'skipped', reason: 'No username to search for' };
 
     const token = process.env.GITHUB_TOKEN;
-    const handle = reveal(username);
+    const handle = primary.value;
 
     try {
       const user = await requestJson<GitHubUser>(`${apiBase()}/users/${encodeURIComponent(handle)}`, {
@@ -94,7 +94,9 @@ export const githubSource: Source = {
       emit.finding({
         id: 'github:profile',
         section: 'profiles',
-        title: 'A GitHub account exists with your username',
+        title: primary.derived
+          ? `GitHub has an account called ${handle}`
+          : 'A GitHub account exists with your username',
         provider: { id: 'github', label: 'GitHub', url: 'https://github.com' },
         origin: { name: 'GitHub', domain: 'github.com' },
         occurredAt: user.created_at
@@ -105,19 +107,17 @@ export const githubSource: Source = {
           signals,
           nameOnly: false,
           usernameOnly: !nameMatches && !emailMatches,
+          derivedHandle: primary.derived,
         }),
         evidence: user.html_url ? { url: user.html_url, label: 'View the profile' } : undefined,
         whyItMatters:
-          (emailMatches
-            ? 'This profile publishes your email address directly, which makes it trivially linkable to everything else you have done under this address. '
-            : '') +
-          'GitHub profiles are fully public, including the location, employer and biography fields. Commit history can also reveal working patterns and, in some configurations, an address you did not intend to publish.',
+          (emailMatches ? 'Publishes your email address directly. ' : '') +
+          'Location, employer and bio are public, and commit history can leak an address you did not mean to publish.',
         actions: [
           {
             type: 'review_privacy_settings',
-            label: 'Review your GitHub profile and email privacy',
-            detail:
-              'GitHub can hide your address and block pushes that would expose it. The setting is under Settings → Emails → Keep my email addresses private.',
+            label: 'Hide your email',
+            detail: 'Settings → Emails → Keep my email addresses private also blocks leaky pushes.',
             url: 'https://github.com/settings/emails',
           },
           closeAccountAction('GitHub', 'github.com'),

@@ -39,11 +39,10 @@ export const npmSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    if (!context.identity.username) {
-      return { status: 'skipped', reason: 'No username was provided' };
-    }
+    const primary = context.handles[0];
+    if (!primary) return { status: 'skipped', reason: 'No username to search for' };
 
-    const handle = reveal(context.identity.username);
+    const handle = primary.value;
 
     try {
       const result = await requestJson<SearchResponse>(
@@ -61,7 +60,9 @@ export const npmSource: Source = {
       emit.finding({
         id: 'npm:packages',
         section: 'profiles',
-        title: `${total} npm package${total === 1 ? ' is' : 's are'} published under your username`,
+        title: primary.derived
+          ? `${total} npm package${total === 1 ? '' : 's'} published by ${handle}`
+          : `${total} npm package${total === 1 ? ' is' : 's are'} published under your username`,
         provider: { id: 'npm', label: 'npm registry', url: 'https://www.npmjs.com' },
         origin: { name: 'npm', domain: 'npmjs.com' },
         // No date: the API returns a page of results, so the earliest date in a
@@ -72,6 +73,7 @@ export const npmSource: Source = {
           signals: ['username_exact'],
           nameOnly: false,
           usernameOnly: true,
+          derivedHandle: primary.derived,
         }),
         evidence: {
           url: `https://www.npmjs.com/~${encodeURIComponent(handle)}`,
@@ -79,14 +81,12 @@ export const npmSource: Source = {
         },
         whyItMatters:
           (names.length > 0 ? `Including ${names.slice(0, 3).join(', ')}. ` : '') +
-          'Published packages are permanent and heavily indexed, so this handle is firmly attached to a public body of work. ' +
-          'Package metadata commonly carries an author email address and a personal repository link that were added years ago and never revisited — worth checking what yours say.',
+          'Package metadata usually carries an author email added years ago and never revisited.',
         actions: [
           {
             type: 'review_account',
-            label: 'Check the author metadata on your packages',
-            detail:
-              'Look at the "author" and "repository" fields in each package.json. Published versions cannot be edited, but future releases can use a no-reply address instead.',
+            label: 'Check your package.json author fields',
+            detail: 'Published versions are frozen, but future releases can use a no-reply address.',
             url: `https://www.npmjs.com/~${encodeURIComponent(handle)}`,
           },
           {

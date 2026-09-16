@@ -61,8 +61,10 @@ export function FindingEntry({
       transition={{ type: 'spring', stiffness: 360, damping: 32, mass: 0.8 }}
       className="glass overflow-hidden"
     >
-      <button
+      <motion.button
         type="button"
+        whileTap={reduced ? undefined : { scale: 0.985 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         className="flex w-full items-start justify-between gap-4 p-4 text-left sm:p-5"
@@ -99,7 +101,7 @@ export function FindingEntry({
             +
           </motion.span>
         </span>
-      </button>
+      </motion.button>
 
       <AnimatePresence initial={false}>
         {open ? (
