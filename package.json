@@ -14,7 +14,8 @@
     "test:e2e": "playwright test",
     "data:wmn": "tsx scripts/fetch-wmn.ts",
     "data:wmn:validate": "tsx scripts/validate-wmn.ts",
-    "data:brokers": "tsx scripts/build-brokers.ts"
+    "data:brokers": "tsx scripts/build-brokers.ts",
+    "data:breaches": "tsx scripts/fetch-breaches.ts"
   },
   "dependencies": {
     "motion": "^13.3.0",

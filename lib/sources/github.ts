@@ -1,6 +1,7 @@
 import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
 import { describeError, HttpError, requestJson } from './http';
+import { closeAccountAction, legalErasureAction } from '../normalize/removal';
 import type { Emit, ScanContext, Source, SourceOutcome } from './types';
 
 /**
@@ -119,6 +120,8 @@ export const githubSource: Source = {
               'GitHub can hide your address and block pushes that would expose it. The setting is under Settings → Emails → Keep my email addresses private.',
             url: 'https://github.com/settings/emails',
           },
+          closeAccountAction('GitHub', 'github.com'),
+          legalErasureAction('GitHub', 'https://github.com/settings/admin'),
         ],
         educationKey: 'public_profile',
       });

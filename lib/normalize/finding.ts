@@ -114,6 +114,12 @@ export interface Finding {
   actions: Action[];
   /** Key into lib/education/content.ts for the inline explainer. */
   educationKey: string;
+  /**
+   * Other providers that independently reported this same finding. Populated by
+   * the orchestrator when it merges duplicates; agreement between independent
+   * indexes is itself evidence, so it is shown rather than discarded.
+   */
+  alsoSeenBy?: string[];
   flags?: {
     /** HIBP's IsSensitive. Shown only after verification, behind a reveal. */
     sensitive?: boolean;

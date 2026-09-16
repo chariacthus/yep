@@ -8,6 +8,8 @@ import { gitlabSource } from './gitlab';
 import { bitbucketSource } from './bitbucket';
 import { dockerHubSource } from './dockerhub';
 import { npmSource } from './npm';
+import { leakCheckSource } from './leakcheck';
+import { registrySources } from './registries';
 import { emailDomainSource } from './email-domain';
 import { waybackSource } from './wayback';
 import { usernameSource } from './usernames';
@@ -24,8 +26,9 @@ import type { Source } from './types';
 export const SOURCES: readonly Source[] = [
   gravatarSource,
   gitlabSource,
-  hibpSource,
   xposedOrNotSource,
+  leakCheckSource,
+  hibpSource,
   hudsonRockSource,
   openPgpSource,
   emailDomainSource,
@@ -33,6 +36,7 @@ export const SOURCES: readonly Source[] = [
   bitbucketSource,
   dockerHubSource,
   npmSource,
+  ...registrySources,
   waybackSource,
   braveSearchSource,
   usernameSource,
@@ -70,6 +74,9 @@ export const HOSTS_WITH_DEDICATED_SOURCES: ReadonlySet<string> = new Set([
   'gravatar.com',
   'en.gravatar.com',
   'keys.openpgp.org',
+  'rubygems.org',
+  'packagist.org',
+  'hex.pm',
 ]);
 
 export function sourceById(id: string): Source | undefined {

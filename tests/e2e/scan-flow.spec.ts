@@ -32,14 +32,23 @@ test('a person can scan without any email step and gets an honest report', async
 
   await page.getByRole('button', { name: /Begin scan/i }).click();
 
-  // The scanning screen must show what is being checked, not just a spinner.
-  await expect(page.getByRole('heading', { name: /Scanning/ })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText('Have I Been Pwned')).toBeVisible();
-  await expect(page.getByText('Trace')).toBeVisible();
+  // The scanning screen must show the work happening, not just a spinner: how
+  // many services are done, how far through the site sweep it is, and which
+  // check is running right now.
+  await expect(page.getByRole('heading', { name: 'Scanning' })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('Services', { exact: true })).toBeVisible();
+  await expect(page.getByText('Found', { exact: true })).toBeVisible();
+  await expect(page.getByText('Live trace')).toBeVisible();
+
+  // The full source list stays available underneath, collapsed.
+  await expect(page.getByText(/\d+ of \d+ sources done/)).toBeVisible();
 
   await expect(page.getByRole('heading', { name: /Exposure report/ })).toBeVisible({
     timeout: 180_000,
   });
+
+  // Exactly one top-level heading, whatever stage we are in.
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
 
   // With no keys configured, the report must say so rather than implying a
   // clean result.

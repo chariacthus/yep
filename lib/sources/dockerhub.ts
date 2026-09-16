@@ -3,6 +3,7 @@ import { assessConfidence } from '../confidence/score';
 import type { SignalId } from '../confidence/signals';
 import type { DataType } from '../normalize/finding';
 import { describeError, HttpError, requestJson } from './http';
+import { closeAccountAction, legalErasureAction } from '../normalize/removal';
 import type { Emit, ScanContext, Source, SourceOutcome } from './types';
 
 /**
@@ -113,6 +114,8 @@ export const dockerHubSource: Source = {
               'Name, company and location are all optional and can be emptied under Account Settings → Personal Information.',
             url: 'https://hub.docker.com/settings/general',
           },
+          closeAccountAction('Docker Hub', 'hub.docker.com'),
+          legalErasureAction('Docker', 'https://www.docker.com/legal/privacy/'),
         ],
         educationKey: 'public_profile',
       });

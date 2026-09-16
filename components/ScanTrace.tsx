@@ -38,10 +38,14 @@ const DOT: Record<TraceLine['tone'], string> = {
 
 export function ScanTrace({ lines }: { lines: TraceLine[] }) {
   const reduced = useReducedMotion();
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: 'end', behavior: reduced ? 'auto' : 'smooth' });
+    const box = scrollRef.current;
+    if (!box) return;
+    // Scroll the container itself. scrollIntoView would move the page, which
+    // yanks the viewer away from whatever they were reading.
+    box.scrollTo({ top: box.scrollHeight, behavior: reduced ? 'auto' : 'smooth' });
   }, [lines, reduced]);
 
   return (
@@ -53,7 +57,8 @@ export function ScanTrace({ lines }: { lines: TraceLine[] }) {
         clipping bug.
       */}
       <div
-        className="max-h-56 overflow-hidden"
+        ref={scrollRef}
+        className="max-h-56 overflow-y-auto overscroll-contain"
         style={{
           maskImage: 'linear-gradient(to bottom, transparent, #000 2.5rem)',
           WebkitMaskImage: 'linear-gradient(to bottom, transparent, #000 2.5rem)',
@@ -85,7 +90,6 @@ export function ScanTrace({ lines }: { lines: TraceLine[] }) {
             ))}
           </AnimatePresence>
         </ul>
-        <div ref={endRef} />
       </div>
       <p className="cursor mt-2 text-xs text-faint" aria-hidden />
     </div>

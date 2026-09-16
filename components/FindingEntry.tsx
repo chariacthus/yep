@@ -132,7 +132,18 @@ export function FindingEntry({
                   </span>
                 </MetaRow>
                 <MetaRow label="Found by">
-                  <span className="text-muted">{finding.provider.label}</span>
+                  <span className="text-muted">
+                    {finding.provider.label}
+                    {finding.alsoSeenBy?.length ? (
+                      <>
+                        {', '}
+                        {finding.alsoSeenBy.join(', ')}
+                        <span className="ml-2 text-[0.8125rem] text-accent-soft">
+                          {finding.alsoSeenBy.length + 1} independent sources agree
+                        </span>
+                      </>
+                    ) : null}
+                  </span>
                 </MetaRow>
               </dl>
 

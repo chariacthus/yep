@@ -4,6 +4,7 @@ import type { SignalId } from '../confidence/signals';
 import type { DataType } from '../normalize/finding';
 import { describeError, HttpError, requestJson } from './http';
 import { presentEmail } from './mask';
+import { closeAccountAction, legalErasureAction } from '../normalize/removal';
 import type { Emit, ScanContext, Source, SourceOutcome } from './types';
 
 /**
@@ -109,6 +110,8 @@ export const gitlabSource: Source = {
               'The public email field can be cleared, and GitLab can hide your activity. Both are under Preferences → Profile.',
             url: 'https://gitlab.com/-/profile',
           },
+          closeAccountAction('GitLab', 'gitlab.com'),
+          legalErasureAction('GitLab', 'https://gitlab.com/-/profile/account'),
         ],
         educationKey: 'public_profile',
       });

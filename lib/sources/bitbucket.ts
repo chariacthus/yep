@@ -2,6 +2,7 @@ import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
 import type { SignalId } from '../confidence/signals';
 import { describeError, HttpError, requestJson } from './http';
+import { closeAccountAction, legalErasureAction } from '../normalize/removal';
 import type { Emit, ScanContext, Source, SourceOutcome } from './types';
 
 /**
@@ -83,6 +84,8 @@ export const bitbucketSource: Source = {
               'Repository visibility is per-repository on Bitbucket; a private workspace can still contain public repositories.',
             url: `https://bitbucket.org/${encodeURIComponent(handle)}/workspace/repositories/`,
           },
+          closeAccountAction('Bitbucket', 'bitbucket.org'),
+          legalErasureAction('Atlassian', 'https://www.atlassian.com/legal/privacy-policy'),
         ],
         educationKey: 'username_reuse',
       });

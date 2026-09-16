@@ -1,6 +1,7 @@
 import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
 import { describeError, HttpError, requestJson } from './http';
+import { closeAccountAction, legalErasureAction } from '../normalize/removal';
 import type { Emit, ScanContext, Source, SourceOutcome } from './types';
 
 /**
@@ -88,6 +89,14 @@ export const npmSource: Source = {
               'Look at the "author" and "repository" fields in each package.json. Published versions cannot be edited, but future releases can use a no-reply address instead.',
             url: `https://www.npmjs.com/~${encodeURIComponent(handle)}`,
           },
+          {
+            type: 'review_privacy_settings',
+            label: 'Hide your email on your npm profile',
+            detail:
+              'npm shows the address on your public profile unless you clear it. Published package metadata is immutable, but the profile is not.',
+            url: 'https://www.npmjs.com/settings/~/profile',
+          },
+          closeAccountAction('npm', 'npmjs.com'),
         ],
         educationKey: 'username_reuse',
       });

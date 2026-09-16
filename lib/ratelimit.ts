@@ -25,11 +25,32 @@ export interface RateLimitRule {
   purpose: string;
 }
 
+function limitFrom(name: string, fallback: number): number {
+  const configured = Number(process.env[name]);
+  return Number.isFinite(configured) && configured > 0 ? Math.floor(configured) : fallback;
+}
+
+/**
+ * Defaults sized for a public deployment, but not so tight that somebody
+ * running this for themselves trips over them: re-scanning after adding a
+ * username, or checking a second address, is normal use rather than abuse.
+ *
+ * The verification limits stay strict whatever else changes, because that is
+ * the one endpoint that can put a message in a stranger's inbox.
+ */
 export const RULES = {
   verificationSendPerEmail: { limit: 3, windowSeconds: 3600, purpose: 'verify-email' },
   verificationSendPerIp: { limit: 10, windowSeconds: 3600, purpose: 'verify-ip' },
-  scanPerEmail: { limit: 3, windowSeconds: 86_400, purpose: 'scan-email' },
-  scanPerIp: { limit: 10, windowSeconds: 86_400, purpose: 'scan-ip' },
+  scanPerEmail: {
+    limit: limitFrom('SCAN_LIMIT_PER_EMAIL_PER_DAY', 20),
+    windowSeconds: 86_400,
+    purpose: 'scan-email',
+  },
+  scanPerIp: {
+    limit: limitFrom('SCAN_LIMIT_PER_IP_PER_DAY', 100),
+    windowSeconds: 86_400,
+    purpose: 'scan-ip',
+  },
 } satisfies Record<string, RateLimitRule>;
 
 const memory = new Map<string, number[]>();

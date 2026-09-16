@@ -15,6 +15,7 @@ import { CoveragePanel } from './CoveragePanel';
 import { Counter } from './Counter';
 import { FindingEntry, SensitiveEntry, type Verdict } from './FindingEntry';
 import { RemovalSection } from './RemovalSection';
+import { ScanningScreen } from './ScanningScreen';
 import { ScanTrace, type TraceLine } from './ScanTrace';
 import { Explainer } from './Explainer';
 
@@ -92,6 +93,14 @@ export function ScanFlow() {
   }, []);
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  // Moving between stages replaces the whole screen, so the old scroll position
+  // is meaningless — and since the submit button sits near the bottom of a long
+  // form, keeping it would drop the viewer below the scanning screen entirely.
+  useEffect(() => {
+    if (stage === 'form') return;
+    window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+  }, [stage, reduced]);
 
   const rawEmailSources = useMemo(
     () => sources.filter((source) => source.sendsRawEmail && source.configured),
@@ -207,7 +216,15 @@ export function ScanFlow() {
               break;
 
             case 'finding':
-              setFindings((current) => [...current, event.finding]);
+              // Upsert, not append: the server re-sends a finding when a second
+              // source reports the same thing and the two are merged.
+              setFindings((current) => {
+                const index = current.findIndex((item) => item.id === event.finding.id);
+                if (index === -1) return [...current, event.finding];
+                const next = [...current];
+                next[index] = event.finding;
+                return next;
+              });
               pushTrace({
                 id: `f-${event.finding.id}`,
                 label: event.finding.origin.name,
@@ -282,7 +299,6 @@ export function ScanFlow() {
     };
   }, [findings, verdicts]);
 
-  const usernameProgress = progress.usernames;
 
   // ------------------------------------------------------------------ render
 
@@ -465,19 +481,24 @@ export function ScanFlow() {
           {...(reduced ? {} : stageMotion)}
           className="mx-auto max-w-readable space-y-4 py-10 sm:py-14"
         >
-          <header className="flex flex-wrap items-end justify-between gap-5">
-            <div>
-              <h1 className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] sm:text-[2.5rem]">
-                {stage === 'scanning' ? 'Scanning' : 'Exposure report'}
-              </h1>
-              {stage === 'scanning' ? (
-                <p className="mt-2 text-[0.9375rem] text-muted">
-                  Results appear as they arrive. You can start reading before it finishes.
-                </p>
-              ) : null}
-            </div>
+          {stage === 'scanning' ? (
+            <ScanningScreen
+              coverage={coverage}
+              progress={progress}
+              findingCount={findings.length}
+            />
+          ) : null}
 
-            {stage === 'report' ? (
+          {/*
+            The scanning screen provides its own heading, so rendering this one
+            as well — even hidden — would put two <h1>s on the page.
+          */}
+          {stage === 'report' ? (
+            <header className="flex flex-wrap items-end justify-between gap-5">
+              <h1 className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] sm:text-[2.5rem]">
+                Exposure report
+              </h1>
+
               <dl className="flex gap-2">
                 {(
                   [
@@ -494,17 +515,8 @@ export function ScanFlow() {
                   </div>
                 ))}
               </dl>
-            ) : usernameProgress ? (
-              <div className="glass px-4 py-3 text-center">
-                <p className="text-[1.75rem] font-semibold leading-none text-accent-soft">
-                  <Counter value={usernameProgress.done} />
-                </p>
-                <p className="mt-1.5 text-[0.75rem] text-faint">
-                  of {usernameProgress.total} sites
-                </p>
-              </div>
-            ) : null}
-          </header>
+            </header>
+          ) : null}
 
           <CoveragePanel
             coverage={coverage}

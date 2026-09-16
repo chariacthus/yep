@@ -78,27 +78,48 @@ browser.
 
 ## Sources
 
+**Seventeen of the nineteen sources need no API key at all.** The app is fully
+useful with nothing configured.
+
 | Source | Needs a key | Gets your address |
 |---|---|---|
-| Gravatar | optional | no — SHA-256 hash only |
-| GitLab | no | no |
-| Have I Been Pwned | yes | no, with Pro k-anonymity; yes on fallback |
 | XposedOrNot | no | yes |
+| LeakCheck | no | yes |
 | Hudson Rock (infostealers) | no | yes |
 | keys.openpgp.org | no | yes |
+| Gravatar | optional | no — SHA-256 hash only |
 | Email domain (MX/SPF/DMARC) | no | no — the domain part only |
+| GitLab | no | no |
 | GitHub | optional | no |
 | Bitbucket | no | no |
 | Docker Hub | no | no |
-| npm registry | no | no |
+| npm · RubyGems · Packagist · Hex.pm | no | no |
 | Internet Archive | no | no |
-| Brave Search | yes | no |
 | Username sweep (~700 sites) | no | no |
 | Data broker directory | no | no — local lookup |
+| Have I Been Pwned *account lookup* | yes | no, with Pro k-anonymity |
+| Brave Search | yes | no |
+
+### Breach detail comes free
+
+HIBP requires a paid key to ask *whether an address is in a breach*, but the
+catalogue describing *what every breach was* is public and keyless. So the free
+indexes say which breaches an address appears in — often just a name — and
+`lib/breach-catalog.ts` turns each one into a real record: the company, the date,
+how many accounts, exactly which categories of data were taken, whether it was
+ever confirmed, and a link to the write-up.
+
+The same breach reported by two indexes becomes **one** finding crediting both,
+because agreement between independent sources is evidence worth showing rather
+than a duplicate worth hiding.
 
 An address found on somebody's public profile is **masked** in the report unless
 it matches the one being scanned. The page is public either way, but returning
 the full address in a machine-readable report would make this a harvester.
+
+Nothing in the report loads from a third party — no breach logos, no avatars.
+The browser only ever talks to this server, which is what keeps `connect-src
+'self'` true and stops anyone learning you ran a scan.
 
 **PyPI is deliberately absent.** Its user pages answer HTTP 200 for every
 username, real or not, so an existence check there would have reported a match
@@ -148,8 +169,13 @@ positive on every scan.
 npm run data:wmn            # refresh the WhatsMyName site list
 npm run data:wmn:validate   # re-test detection logic; needs network, takes minutes
 npm run data:brokers        # rebuild the broker directory
+npm run data:breaches       # vendor the HIBP breach catalogue (optional)
 npx tsx scripts/build-names.ts
 ```
+
+`data:breaches` is optional — the catalogue is fetched and cached at runtime
+anyway. Vendoring it makes the first scan after a cold start faster and keeps
+breach descriptions working if HIBP is briefly unreachable.
 
 `data:wmn:validate` is the largest false-positive control in the username sweep:
 it re-tests every site against the known-good usernames the dataset ships and

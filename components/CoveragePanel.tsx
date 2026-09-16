@@ -51,7 +51,7 @@ export function CoveragePanel({
   const [open, setOpen] = useState(false);
   const reduced = useReducedMotion();
 
-  const expanded = open || scanning;
+  const expanded = open;
   const incomplete = coverage.filter((entry) => INCOMPLETE.includes(entry.status));
   const checked = coverage.filter((entry) => entry.status === 'ok').length;
   const running = coverage.filter((entry) => entry.status === 'running').length;
@@ -67,8 +67,7 @@ export function CoveragePanel({
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={expanded}
-        disabled={scanning}
-        className="flex w-full items-center justify-between gap-4 p-4 text-left disabled:cursor-default sm:p-5"
+        className="flex w-full items-center justify-between gap-4 p-4 text-left sm:p-5"
       >
         <span className="min-w-0">
           <span className="block text-[1.0625rem] font-medium text-ink">
@@ -81,16 +80,14 @@ export function CoveragePanel({
           </span>
         </span>
 
-        {!scanning ? (
-          <motion.span
-            aria-hidden
-            animate={{ rotate: expanded ? 45 : 0 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-            className="shrink-0 text-lg leading-none text-faint"
-          >
-            +
-          </motion.span>
-        ) : null}
+        <motion.span
+          aria-hidden
+          animate={{ rotate: expanded ? 45 : 0 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+          className="shrink-0 text-lg leading-none text-faint"
+        >
+          +
+        </motion.span>
       </button>
 
       <AnimatePresence initial={false}>

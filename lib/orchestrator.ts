@@ -66,6 +66,38 @@ export type ScanEvent =
       counts: { findings: number; removalOpportunities: number; withheld: number };
     };
 
+/**
+ * Merges a finding that another source already reported.
+ *
+ * Several providers index the same breaches, so the same real-world event
+ * arrives more than once. Rather than listing it twice, the richer version is
+ * kept and every provider that saw it is credited — which is itself useful,
+ * because a breach three independent indexes agree on is better corroborated
+ * than one only a single index knows about.
+ */
+function mergeFindings(existing: Finding, incoming: Finding): Finding {
+  const richer = (incoming.whyItMatters?.length ?? 0) > (existing.whyItMatters?.length ?? 0)
+    ? incoming
+    : existing;
+  const other = richer === incoming ? existing : incoming;
+
+  const seenBy = [...new Set([...(existing.alsoSeenBy ?? []), existing.provider.label, incoming.provider.label])]
+    .filter((label) => label !== richer.provider.label);
+
+  return {
+    ...richer,
+    // Keep whichever fields the sparser record happened to fill in.
+    origin: { ...other.origin, ...richer.origin },
+    occurredAt: richer.occurredAt ?? other.occurredAt,
+    discoveredAt: richer.discoveredAt ?? other.discoveredAt,
+    evidence: richer.evidence ?? other.evidence,
+    dataTypes: [...new Set([...richer.dataTypes, ...other.dataTypes])],
+    actions: richer.actions.length >= other.actions.length ? richer.actions : other.actions,
+    flags: { ...other.flags, ...richer.flags },
+    alsoSeenBy: seenBy.length > 0 ? seenBy : undefined,
+  };
+}
+
 export interface ScanOptions {
   identity: Identity;
   emailVerified: boolean;
@@ -188,6 +220,8 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
   let findingCount = 0;
   let opportunityCount = 0;
   let withheldCount = 0;
+  /** Findings already sent, by id, so duplicates merge instead of stacking. */
+  const emitted = new Map<string, Finding>();
 
   const runSource = async (source: Source): Promise<void> => {
     const context: ScanContext = {
@@ -201,6 +235,16 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
 
     const emit = {
       finding: (finding: Finding) => {
+        const existing = emitted.get(finding.id);
+        if (existing) {
+          // Already reported by another source: merge and re-send, rather than
+          // showing the same breach twice under two provider names.
+          const merged = mergeFindings(existing, finding);
+          emitted.set(finding.id, merged);
+          queue.push({ type: 'finding', finding: merged });
+          return;
+        }
+        emitted.set(finding.id, finding);
         findingCount += 1;
         queue.push({ type: 'finding', finding });
       },

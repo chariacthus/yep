@@ -136,7 +136,7 @@ export default function SourcesPage() {
         <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">Credits and licences</h2>
         <ul className="mt-4 space-y-3 text-[0.9375rem] leading-relaxed text-muted">
           <li>
-            Breach data from{' '}
+            Breach descriptions, dates and data categories from{' '}
             <a
               className="text-accent hover:underline"
               href="https://haveibeenpwned.com"
@@ -145,7 +145,30 @@ export default function SourcesPage() {
             >
               Have I Been Pwned
             </a>
-            , used under Creative Commons Attribution.
+            , used under Creative Commons Attribution. Their breach catalogue is public and needs
+            no API key, which is why every breach we find comes with a real description and a link
+            even though we hold no subscription.
+          </li>
+          <li>
+            Breach lookups powered by{' '}
+            <a
+              className="text-accent hover:underline"
+              href="https://leakcheck.io"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              LeakCheck
+            </a>{' '}
+            and{' '}
+            <a
+              className="text-accent hover:underline"
+              href="https://xposedornot.com"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              XposedOrNot
+            </a>
+            , both free and keyless.
           </li>
           <li>
             Username site data from the{' '}

@@ -1,5 +1,6 @@
 import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
+import { archiveRemovalAction } from '../normalize/removal';
 import { describeError, requestJson } from './http';
 import type { Emit, ScanContext, Source, SourceOutcome } from './types';
 
@@ -123,12 +124,13 @@ export const waybackSource: Source = {
                 'Open the snapshot and see what is actually visible before deciding whether it needs action.',
               url: `https://web.archive.org/web/${last}/${target}`,
             },
+            archiveRemovalAction(),
             {
-              type: 'opt_out',
-              label: 'Request removal from the archive',
+              type: 'close_account',
+              label: 'Delete the original account if it still exists',
               detail:
-                'The Internet Archive will consider exclusion requests for pages about you. Email info@archive.org with the URLs and your reason.',
-              url: 'https://help.archive.org/help/how-do-i-request-to-remove-something-from-archive-org/',
+                `If your ${pattern.site} account is still live, closing it stops new snapshots being taken. Existing snapshots stay until the archive removes them, so do both.`,
+              url: `https://${target.split('/')[0]}`,
             },
           ],
           educationKey: 'archived_page',

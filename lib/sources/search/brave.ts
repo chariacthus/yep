@@ -1,6 +1,7 @@
 import { reveal } from '../../identity';
 import { assessConfidence } from '../../confidence/score';
 import type { SignalId } from '../../confidence/signals';
+import { searchRemovalActions } from '../../normalize/removal';
 import { describeError, HttpError, requestJson } from '../http';
 import type { Emit, ScanContext, Source, SourceOutcome } from '../types';
 
@@ -147,11 +148,12 @@ export const braveSearchSource: Source = {
             actions: [
               {
                 type: 'review_account',
-                label: 'Check what this page shows about you',
+                label: 'Check what this page actually shows',
                 detail:
-                  'If it is yours, the site that hosts it controls whether it stays up. De-indexing alone leaves the page live.',
+                  'Open it before acting. Plenty of indexed pages are harmless, and knowing what is on it decides which of the steps below is worth the effort.',
                 url: result.url,
               },
+              ...searchRemovalActions(result.url),
             ],
             educationKey: 'search_result',
           });

@@ -81,11 +81,28 @@ automated access regardless; the concurrency and back-off settings exist to keep
 this within the bounds of courteous behaviour, and hosts can be excluded via
 `data/wmn-health.json`.
 
+## LeakCheck
+
+The public API is keyless and their terms permit commercial use in exchange for
+a "Powered by LeakCheck" link, which appears on `/about/sources`. Keep it there.
+
+It returns breach names and data categories only — there is no endpoint on the
+public tier that could return a credential even if we asked for one.
+
+## The HIBP breach catalogue
+
+`GET /api/v3/breaches` needs no API key; only the per-address lookups do. The app
+uses the catalogue unconditionally to describe breaches found by other sources,
+which is within the documented terms and is attributed under CC BY on
+`/about/sources`. Nothing is cached per-address, so this does not build the
+"substantially similar breach database" the terms prohibit — it caches the public
+catalogue, which is the same thing their own website serves.
+
 ## The keyless profile sources
 
-GitLab, Docker Hub, npm and Bitbucket are queried through their public,
-documented APIs with no authentication, at one request each per scan. Nothing is
-scraped and no rate limit is pressed.
+GitLab, Docker Hub, npm, Bitbucket, RubyGems, Packagist and Hex.pm are queried
+through their public, documented APIs with no authentication, at one request each
+per scan. Nothing is scraped and no rate limit is pressed.
 
 Addresses discovered on those public profiles are **masked** before they reach
 the report, unless they match the address being scanned. The profile is public

@@ -1,27 +1,26 @@
+import { getBreachCatalog } from '../breach-catalog';
 import { reveal } from '../identity';
-import { assessConfidence } from '../confidence/score';
-import { mapDataClasses } from '../normalize/dataclasses';
-import type { Finding } from '../normalize/finding';
+import { buildBreachFinding } from '../normalize/breach-finding';
 import { describeError, HttpError, requestJson } from './http';
 import type { Emit, ScanContext, Source, SourceOutcome } from './types';
 
 /**
  * XposedOrNot — a keyless breach index.
  *
- * Valuable because it needs no subscription, so the tool is useful to somebody
- * who has configured nothing at all. The trade-off is that its API takes the
- * address in the clear, with no k-anonymity option, which is why it is declared
- * `sendsRawEmail` and can be declined in the consent step.
+ * Valuable because it needs no subscription, so the tool is genuinely useful to
+ * somebody who has configured nothing. The trade-off is that its API takes the
+ * address in the clear, which is why it is declared `sendsRawEmail` and can be
+ * declined in the consent step.
  *
- * The response shape is parsed defensively: fields are optional and types are
- * checked, because a keyless public API can change without notice and a shape
- * change must degrade to "no findings", never to a crash or a wrong finding.
+ * It returns fairly thin records — often little more than a breach name — so
+ * everything it finds is enriched from the public HIBP catalogue before it
+ * becomes a finding. See lib/normalize/breach-finding.ts.
+ *
+ * The response is parsed defensively: a keyless public API can change without
+ * notice, and a shape change must degrade to "no findings" rather than to a
+ * crash or, worse, a wrong finding.
  */
 
-/**
- * Read at call time rather than module load, so contract tests can point the
- * adapter at a local fixture server.
- */
 function apiBase(): string {
   return process.env.XPOSEDORNOT_API_BASE ?? 'https://api.xposedornot.com/v1';
 }
@@ -30,13 +29,8 @@ interface BreachDetail {
   breach?: string;
   details?: string;
   domain?: string;
-  industry?: string;
-  /** Semicolon-separated data classes, e.g. "Email addresses;Passwords". */
   xposed_data?: string;
-  /** Usually a year. */
   xposed_date?: string;
-  xposed_records?: number;
-  /** How the credentials were stored: plaintext, easytocrack, hardtocrack... */
   password_risk?: string;
 }
 
@@ -45,85 +39,10 @@ interface AnalyticsResponse {
   Error?: string;
 }
 
-/**
- * Describes how well credentials were protected. This is a property of the
- * breach, not a credential -- no value is involved -- and it materially changes
- * how urgent the response is.
- */
-function credentialStorageNote(risk: string | undefined): string {
-  switch (risk?.toLowerCase()) {
-    case 'plaintext':
-      return 'The passwords in this breach were stored without any protection, so they were readable immediately.';
-    case 'easytocrack':
-      return 'The passwords were stored with weak protection and are likely to have been recovered.';
-    case 'hardtocrack':
-      return 'The passwords were stored with strong protection, which slows attackers down but does not make the breach harmless.';
-    default:
-      return '';
-  }
-}
-
-function toFinding(detail: BreachDetail, emailVerified: boolean): Finding | null {
-  const name = detail.breach?.trim();
-  if (!name) return null;
-
-  const classes = (detail.xposed_data ?? '')
-    .split(';')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  const dataTypes = mapDataClasses(classes);
-  if (!dataTypes.includes('email')) dataTypes.push('email');
-
-  const includesCredentials = dataTypes.includes('password_credential');
-  const year = Number(detail.xposed_date?.slice(0, 4));
-
-  const description = [
-    detail.details?.trim(),
-    includesCredentials ? credentialStorageNote(detail.password_risk) : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .slice(0, 600);
-
-  return {
-    id: `xon:${name}`,
-    section: 'breaches',
-    title: `Your email address was in the ${name} breach`,
-    provider: { id: 'xposedornot', label: 'XposedOrNot', url: 'https://xposedornot.com' },
-    origin: { name, domain: detail.domain || undefined },
-    occurredAt: Number.isFinite(year) ? { year, precision: 'year' } : undefined,
-    dataTypes,
-    confidence: assessConfidence({
-      signals: ['email_exact'],
-      nameOnly: false,
-    }),
-    evidence: { url: 'https://xposedornot.com', label: 'About this index' },
-    whyItMatters:
-      description ||
-      `Your address appears in data taken from ${name}. Information from a breach circulates indefinitely once it is out.`,
-    actions: includesCredentials
-      ? [
-          {
-            type: 'change_password',
-            label: 'Change this password everywhere you used it',
-            detail: `Change your ${name} password, and change it anywhere else you reused it.`,
-          },
-          {
-            type: 'enable_2fa',
-            label: 'Turn on two-factor authentication',
-            detail: 'This makes a stolen password insufficient on its own. Start with your email account.',
-          },
-        ]
-      : [
-          {
-            type: 'review_account',
-            label: 'Check whether you still use this account',
-            detail: 'Closing an account you no longer use removes the data the service still holds.',
-          },
-        ],
-    educationKey: includesCredentials ? 'password_in_breach' : 'breach',
-  };
+/** The simpler endpoint, used when the analytics one gives nothing. */
+interface CheckResponse {
+  breaches?: string[][];
+  Error?: string;
 }
 
 export const xposedOrNotSource: Source = {
@@ -139,27 +58,63 @@ export const xposedOrNotSource: Source = {
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
     const email = reveal(context.identity.emailNormalized);
+    const provider = {
+      id: 'xposedornot',
+      label: 'XposedOrNot',
+      url: 'https://xposedornot.com',
+    };
 
     try {
-      const data = await requestJson<AnalyticsResponse>(
-        `${apiBase()}/breach-analytics?email=${encodeURIComponent(email)}`,
-        { signal: context.signal, timeoutMs: 12_000 },
-      );
+      const [catalog, analytics] = await Promise.all([
+        getBreachCatalog(context.signal),
+        requestJson<AnalyticsResponse>(
+          `${apiBase()}/breach-analytics?email=${encodeURIComponent(email)}`,
+          { signal: context.signal, timeoutMs: 12_000 },
+        ).catch(() => null),
+      ]);
 
-      // "Not found" is the documented way this API says the address is clean.
-      if (!data || data.Error) return { status: 'ok', checked: 0 };
+      const details = analytics?.ExposedBreaches?.breaches_details;
+      let names: RawEntry[] = [];
 
-      const details = data.ExposedBreaches?.breaches_details;
-      if (!Array.isArray(details)) return { status: 'ok', checked: 0 };
+      if (Array.isArray(details) && details.length > 0) {
+        names = details.map((detail) => ({
+          name: detail.breach ?? '',
+          fallback: {
+            domain: detail.domain || undefined,
+            year: Number(detail.xposed_date?.slice(0, 4)) || undefined,
+            description: detail.details?.trim(),
+            credentialStorage: detail.password_risk,
+            dataClasses: (detail.xposed_data ?? '')
+              .split(';')
+              .map((item) => item.trim())
+              .filter(Boolean),
+          },
+        }));
+      } else {
+        // Fall back to the plain check endpoint, which returns bare names.
+        const check = await requestJson<CheckResponse>(
+          `${apiBase()}/check-email/${encodeURIComponent(email)}`,
+          { signal: context.signal, timeoutMs: 10_000 },
+        ).catch(() => null);
+
+        const flat = check?.breaches?.flat?.() ?? [];
+        names = flat.filter(Boolean).map((name) => ({ name }));
+      }
 
       let emitted = 0;
-      for (const detail of details) {
-        const finding = toFinding(detail, context.emailVerified);
-        if (finding) {
-          emit.finding(finding);
-          emitted += 1;
-        }
+      for (const entry of names) {
+        if (!entry.name) continue;
+        const finding = buildBreachFinding(entry, catalog, provider);
+        if (!finding) continue;
+
+        // Sensitive breaches can out somebody, and ownership is only proved
+        // when verification is switched on.
+        if (finding.flags?.sensitive && !context.emailVerified) continue;
+
+        emit.finding(finding);
+        emitted += 1;
       }
+
       return { status: 'ok', checked: emitted };
     } catch (error) {
       if (error instanceof HttpError && error.status === 429) {
@@ -169,3 +124,14 @@ export const xposedOrNotSource: Source = {
     }
   },
 };
+
+interface RawEntry {
+  name: string;
+  fallback?: {
+    domain?: string;
+    year?: number;
+    description?: string;
+    credentialStorage?: string;
+    dataClasses?: string[];
+  };
+}

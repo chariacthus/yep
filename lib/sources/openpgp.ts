@@ -1,6 +1,7 @@
 import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
 import { describeError, request } from './http';
+import { closeAccountAction, legalErasureAction } from '../normalize/removal';
 import type { Emit, ScanContext, Source, SourceOutcome } from './types';
 
 /**
@@ -65,6 +66,13 @@ export const openPgpSource: Source = {
             detail:
               'keys.openpgp.org lets you unpublish the identity attached to a key by confirming ownership of the address.',
             url: 'https://keys.openpgp.org/manage',
+          },
+          {
+            type: 'review_account',
+            label: 'Older key servers cannot be deleted from',
+            detail:
+              'keys.openpgp.org supports removal, but the older SKS network was designed to be append-only and has no delete. If your key is there too, the practical step is to publish a revocation certificate rather than to expect deletion.',
+            url: 'https://keys.openpgp.org/about',
           },
         ],
         educationKey: 'public_profile',

@@ -2,6 +2,7 @@ import { reveal } from '../../identity';
 import { assessConfidence } from '../../confidence/score';
 import type { Finding } from '../../normalize/finding';
 import type { SignalId } from '../../confidence/signals';
+import { closeAccountAction, legalErasureAction } from '../../normalize/removal';
 import type { Emit, ScanContext, Source, SourceOutcome } from '../types';
 import { HOSTS_WITH_DEDICATED_SOURCES } from '../registry';
 import { probeAll } from './prober';
@@ -137,10 +138,19 @@ export const usernameSource: Source = {
             type: 'review_account',
             label: 'Check whether this account is yours',
             detail: result.profileUrl
-              ? 'Open the profile and confirm. If it is yours and you no longer use it, closing it removes whatever it still shows.'
-              : 'If this account is yours and you no longer use it, closing it removes whatever it still shows.',
+              ? 'Open the profile and confirm before doing anything else — usernames are not unique, and this may belong to somebody else entirely.'
+              : 'Confirm this is yours before acting: usernames are not unique, and this may belong to somebody else.',
             url: result.profileUrl,
           },
+          {
+            type: 'review_privacy_settings',
+            label: 'Make the profile private, or strip it back',
+            detail:
+              'If you still use the account, most sites let you hide the profile, remove the real name and location, and turn off search-engine indexing. That gets most of the benefit without losing the account.',
+            url: result.profileUrl,
+          },
+          closeAccountAction(site.name, site.host),
+          legalErasureAction(site.name, result.profileUrl),
         ],
         educationKey: 'username_reuse',
         flags: {

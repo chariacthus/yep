@@ -3,6 +3,7 @@ import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
 import type { Finding } from '../normalize/finding';
 import { describeError, HttpError, requestJson } from './http';
+import { closeAccountAction, legalErasureAction } from '../normalize/removal';
 import type { Emit, ScanContext, Source, SourceOutcome } from './types';
 
 /**
@@ -119,6 +120,8 @@ export const gravatarSource: Source = {
               'Gravatar lets you hide profile fields and unlink connected accounts. Anything left visible is readable by anyone who knows your address.',
             url: 'https://gravatar.com/profile',
           },
+          closeAccountAction('Gravatar', 'gravatar.com'),
+          legalErasureAction('Automattic, who run Gravatar', 'https://automattic.com/privacy/'),
         ],
         educationKey: 'public_profile',
       });
