@@ -65,11 +65,12 @@ export default function PrivacyPage() {
   ];
 
   return (
-    <div className="max-w-readable space-y-12 py-12">
+    <div className="mx-auto max-w-readable space-y-10 py-12">
       <header>
-        <p className="tag-accent">Handling</p>
-        <h1 className="display mt-4 text-4xl">What happens to your information</h1>
-        <p className="mt-5 leading-relaxed text-muted">
+        <h1 className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] sm:text-[2.5rem]">
+          What happens to your information
+        </h1>
+        <p className="mt-4 text-[1.0625rem] leading-relaxed text-muted">
           There are no accounts, no scan history and no email, because there is no database and no
           mail service. Your report exists in your browser tab and nowhere else. This page describes
           exactly what exists at each stage of a scan.
@@ -77,24 +78,26 @@ export default function PrivacyPage() {
       </header>
 
       <section>
-        <h2 className="display text-2xl">Stage by stage</h2>
-        <ol className="mt-4">
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">Stage by stage</h2>
+        <ol className="mt-4 space-y-2">
           {stages.map((item, index) => (
-            <li key={item.stage} className="rule grid grid-cols-[2.5rem_1fr] gap-4 py-4">
-              <span className="index pt-1">{String(index + 1).padStart(3, '0')}</span>
-              <div>
-                <p className="text-[0.9375rem] text-ink">{item.stage}</p>
-                <dl className="mt-2 space-y-1 text-sm text-muted">
+            <li key={item.stage} className="glass flex gap-4 p-4 sm:p-5">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/18 text-[0.75rem] font-semibold text-accent-soft">
+                {index + 1}
+              </span>
+              <div className="min-w-0">
+                <p className="text-[1.0625rem] font-medium text-ink">{item.stage}</p>
+                <dl className="mt-2 space-y-1.5 text-[0.9375rem] text-muted">
                   <div className="flex gap-3">
-                    <dt className="tag w-16 shrink-0 pt-px">What</dt>
+                    <dt className="label w-14 shrink-0">What</dt>
                     <dd>{item.what}</dd>
                   </div>
                   <div className="flex gap-3">
-                    <dt className="tag w-16 shrink-0 pt-px">Where</dt>
+                    <dt className="label w-14 shrink-0">Where</dt>
                     <dd>{item.where}</dd>
                   </div>
                   <div className="flex gap-3">
-                    <dt className="tag w-16 shrink-0 pt-px">For</dt>
+                    <dt className="label w-14 shrink-0">For</dt>
                     <dd>{item.lifetime}</dd>
                   </div>
                 </dl>
@@ -105,13 +108,13 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="display text-2xl">No verification, and what follows from it</h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted">
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">No verification, and what follows from it</h2>
+        <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
           This deployment does not email you a code, so nothing proves that the address you enter is
           yours. That is a deliberate trade — running a mail service costs money — and it has
           consequences we would rather state than hide:
         </p>
-        <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+        <ul className="mt-4 space-y-3 text-[0.9375rem] leading-relaxed text-muted">
           <li>
             Results from sensitive categories — adult, dating, political, health — are{' '}
             <span className="text-ink">withheld entirely</span>, from everyone. Nobody should be able
@@ -131,8 +134,8 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="display text-2xl">Logging</h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted">
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">Logging</h2>
+        <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
           Server logs record a random scan identifier, which sources ran, how long they took and
           whether they failed. They never record your address, name or username. This is enforced by
           a test that runs a real scan with marker values and fails the build if any of them appears
@@ -141,8 +144,8 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="display text-2xl">Passwords</h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted">
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">Passwords</h2>
+        <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
           This tool never asks for, retrieves, stores or displays a password, including yours. Where
           a breach included credentials, the report records that fact and nothing else. One of the
           sources we use returns stolen passwords in its API response; our code does not read those
@@ -151,15 +154,15 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="display text-2xl">What this tool is not</h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted">
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">What this tool is not</h2>
+        <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
           It is not a background-check or people-search service. Using it for employment, tenancy or
           credit screening is prohibited.
         </p>
       </section>
 
-      <p className="rule pt-6">
-        <Link href="/" className="tag-accent hover:underline">
+      <p className="pt-2">
+        <Link href="/" className="btn-quiet">
           ← Back to the scanner
         </Link>
       </p>

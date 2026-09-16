@@ -3,78 +3,133 @@
 @tailwind utilities;
 
 /**
- * Dossier.
+ * Translucent, layered, iOS-like.
  *
- * The visual model is a case file, not a dashboard: a dark ground, hairline
- * rules instead of card borders, monospace for anything the eye should read as
- * data, and exactly one accent colour used sparingly enough that it still means
- * something when it appears.
+ * The model is Apple's glass: a coloured ground, panels that let it show
+ * through with a heavy blur and a saturation boost, hairline light borders that
+ * read as a bevelled edge, and large soft radii.
  *
- * Deliberately absent: rounded cards, drop shadows, gradients, coloured status
- * pills. Hierarchy comes from type scale, weight and space.
+ * Two practical rules that keep it from turning to mud:
+ *   - Glass needs something behind it. The gradient field in the layout is not
+ *     decoration; without it the blur has nothing to work with.
+ *   - Blur is expensive. It goes on a small number of panels, never on every row
+ *     inside them.
  */
 :root {
-  /* Dark is the primary theme; the light values below are the fallback. */
-  --canvas: 10 10 9;
-  --surface: 18 17 16;
-  --raised: 28 27 25;
-  --rule: 48 46 43;
-  --rule-strong: 72 69 64;
-  --ink: 240 238 234;
-  --muted: 163 158 150;
-  --faint: 118 113 106;
-  --accent: 214 112 62;
-  --accent-ink: 12 11 10;
-  --alarm: 214 112 62;
+  color-scheme: dark;
 
-  --font-display: var(--font-instrument-serif), Georgia, serif;
-  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bg: 8 10 18;
+  --bg-2: 14 17 30;
+
+  /* Glass fills and edges, as raw channels so alpha can vary per surface. */
+  --glass: 255 255 255;
+  --glass-fill: 0.07;
+  --glass-fill-strong: 0.11;
+  --glass-edge: 0.14;
+  --glass-edge-soft: 0.08;
+
+  /* Hairline on inputs and wells. White on dark; dark ink on light. */
+  --edge: 255 255 255;
+  --edge-alpha: 0.09;
+
+  /* Inset wells and inputs. Dark scrim on dark, white on light. */
+  --inset: 0 0 0;
+  --inset-fill: 0.16;
+  --inset-fill-strong: 0.22;
+  --well-fill: 0.14;
+
+  --ink: 245 246 250;
+  --muted: 163 169 186;
+  --faint: 118 125 145;
+
+  --accent: 10 132 255;
+  --accent-soft: 64 156 255;
+  --accent-ink: 255 255 255;
+  --good: 48 209 88;
+  --warn: 255 159 10;
+  --alarm: 255 69 58;
+
+  --radius: 22px;
+  --radius-sm: 14px;
+  --radius-lg: 30px;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+    var(--font-inter), system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
-    --canvas: 247 245 241;
-    --surface: 252 251 249;
-    --raised: 238 235 229;
-    --rule: 214 209 200;
-    --rule-strong: 176 170 159;
-    --ink: 26 24 22;
-    --muted: 88 83 77;
-    --faint: 129 123 114;
-    --accent: 168 74 32;
-    --accent-ink: 252 251 249;
-    --alarm: 154 52 24;
+    color-scheme: light;
+
+    --bg: 238 241 248;
+    --bg-2: 226 231 243;
+
+    --glass: 255 255 255;
+    --glass-fill: 0.62;
+    --glass-fill-strong: 0.76;
+    --glass-edge: 0.9;
+    --glass-edge-soft: 0.55;
+
+    --edge: 17 20 28;
+    --edge-alpha: 0.1;
+
+    --inset: 255 255 255;
+    --inset-fill: 0.72;
+    --inset-fill-strong: 0.92;
+    --well-fill: 0.55;
+
+    --ink: 17 20 28;
+    --muted: 88 95 112;
+    --faint: 124 131 149;
+
+    --accent: 0 113 227;
+    --accent-soft: 0 122 255;
+    --accent-ink: 255 255 255;
+    --good: 30 166 64;
+    --warn: 200 120 0;
+    --alarm: 215 45 40;
   }
 }
 
-:root[data-theme='light'] {
-  --canvas: 247 245 241;
-  --surface: 252 251 249;
-  --raised: 238 235 229;
-  --rule: 214 209 200;
-  --rule-strong: 176 170 159;
-  --ink: 26 24 22;
-  --muted: 88 83 77;
-  --faint: 129 123 114;
-  --accent: 168 74 32;
-  --accent-ink: 252 251 249;
-  --alarm: 154 52 24;
-}
-
-html {
-  color-scheme: dark light;
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  background-color: rgb(var(--canvas));
+  background: rgb(var(--bg));
   color: rgb(var(--ink));
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  letter-spacing: -0.011em;
 }
 
-/* Figures line up in columns; a report is full of them. */
+/**
+ * The ground the glass sits on. Fixed, so panels blur the same field wherever
+ * the page is scrolled.
+ */
+.field-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60rem 40rem at 12% -8%, rgb(var(--accent) / 0.26), transparent 62%),
+    radial-gradient(48rem 34rem at 92% 6%, rgb(168 85 247 / 0.2), transparent 60%),
+    radial-gradient(52rem 40rem at 72% 96%, rgb(14 165 180 / 0.17), transparent 62%),
+    linear-gradient(180deg, rgb(var(--bg)) 0%, rgb(var(--bg-2)) 100%);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) .field-bg {
+    background:
+      radial-gradient(60rem 40rem at 12% -8%, rgb(var(--accent) / 0.2), transparent 62%),
+      radial-gradient(48rem 34rem at 92% 6%, rgb(168 85 247 / 0.16), transparent 60%),
+      radial-gradient(52rem 40rem at 72% 96%, rgb(14 165 180 / 0.14), transparent 62%),
+      linear-gradient(180deg, rgb(var(--bg)) 0%, rgb(var(--bg-2)) 100%);
+  }
+}
+
 .tabular,
 input,
 time {
@@ -82,12 +137,12 @@ time {
 }
 
 *:focus-visible {
-  outline: 1px solid rgb(var(--accent));
-  outline-offset: 3px;
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: rgb(var(--accent) / 0.28);
+  background: rgb(var(--accent) / 0.32);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -101,53 +156,101 @@ time {
 }
 
 @layer components {
-  /* A small uppercase monospace label. Does most of the typographic work. */
-  .tag {
-    @apply font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-faint;
+  /* The base glass panel. */
+  .glass {
+    background: rgb(var(--glass) / var(--glass-fill));
+    border: 1px solid rgb(var(--glass) / var(--glass-edge-soft));
+    border-radius: var(--radius);
+    backdrop-filter: blur(32px) saturate(180%);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+    box-shadow:
+      0 1px 0 0 rgb(var(--glass) / var(--glass-edge)) inset,
+      0 12px 40px -12px rgb(0 0 0 / 0.45);
   }
 
-  .tag-accent {
-    @apply tag text-accent;
+  .glass-strong {
+    background: rgb(var(--glass) / var(--glass-fill-strong));
+    border: 1px solid rgb(var(--glass) / var(--glass-edge));
+    border-radius: var(--radius);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    box-shadow:
+      0 1px 0 0 rgb(var(--glass) / var(--glass-edge)) inset,
+      0 20px 60px -20px rgb(0 0 0 / 0.55);
   }
 
-  /* The index number in an entry's left gutter. */
-  .index {
-    @apply font-mono text-[0.6875rem] tabular-nums tracking-[0.1em] text-faint;
+  /* An inset well: reads as carved into the panel rather than floating on it. */
+  .well {
+    background: rgb(var(--inset) / var(--well-fill));
+    border: 1px solid rgb(var(--edge) / var(--edge-alpha));
+    border-radius: var(--radius-sm);
   }
 
-  .display {
-    font-family: var(--font-display);
-    @apply font-normal leading-[1.05] tracking-[-0.01em];
+  .label {
+    @apply text-[0.8125rem] font-medium text-muted;
+  }
+
+  .mono-xs {
+    font-family: var(--font-mono);
+    @apply text-[0.6875rem] tracking-tight;
   }
 
   .field {
-    @apply w-full border-0 border-b border-rule bg-transparent px-0 py-2.5
-      font-sans text-ink placeholder:text-faint/70
-      focus:border-accent focus:outline-none;
-    transition: border-color 160ms ease;
+    @apply w-full bg-transparent px-4 py-3.5 text-[1.0625rem] text-ink
+      placeholder:text-faint/70 focus:outline-none;
+    border: 1px solid rgb(var(--edge) / var(--edge-alpha));
+    border-radius: var(--radius-sm);
+    background: rgb(var(--inset) / var(--inset-fill));
+    transition:
+      border-color 180ms ease,
+      background 180ms ease;
+  }
+
+  .field:focus {
+    border-color: rgb(var(--accent) / 0.75);
+    background: rgb(var(--inset) / var(--inset-fill-strong));
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 font-mono text-[0.6875rem]
-      uppercase tracking-[0.14em] transition-colors
-      disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex select-none items-center justify-center gap-2 text-[0.9375rem]
+      font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40;
+    border-radius: 999px;
   }
 
   .btn-primary {
-    @apply btn bg-accent px-5 py-3 text-accent-ink hover:bg-accent/90;
+    @apply btn px-6 py-3 text-accent-ink;
+    background: linear-gradient(180deg, rgb(var(--accent-soft)), rgb(var(--accent)));
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.25) inset,
+      0 10px 24px -10px rgb(var(--accent) / 0.9);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.07);
   }
 
   .btn-quiet {
-    @apply btn border border-rule px-4 py-2.5 text-muted hover:border-rule-strong hover:text-ink;
+    @apply btn px-4 py-2 text-[0.875rem] text-ink;
+    background: rgb(var(--glass) / 0.1);
+    border: 1px solid rgb(var(--edge) / var(--edge-alpha));
   }
 
-  /* The hairline that separates entries. Replaces every card border. */
-  .rule {
-    @apply border-t border-rule;
+  .btn-quiet:hover:not(:disabled) {
+    background: rgb(var(--glass) / 0.16);
+  }
+
+  /* A capsule, as used for statuses and counts. */
+  .pill {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-[0.75rem] font-medium;
+    border-radius: 999px;
+    background: rgb(var(--glass) / 0.1);
+  }
+
+  .divide-hair > * + * {
+    border-top: 1px solid rgb(var(--glass) / 0.07);
   }
 }
 
-/* The scanning feed's cursor. */
 @keyframes blink {
   0%,
   49% {
@@ -160,7 +263,7 @@ time {
 }
 
 .cursor::after {
-  content: '▌';
+  content: '▍';
   animation: blink 1.1s steps(1) infinite;
-  color: rgb(var(--accent));
+  color: rgb(var(--accent-soft));
 }

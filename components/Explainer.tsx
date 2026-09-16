@@ -18,17 +18,22 @@ export function Explainer({ educationKey }: { educationKey: string }) {
   if (!explainer) return null;
 
   return (
-    <div className="border-l border-rule pl-4">
+    <div className="well overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="group flex w-full items-baseline gap-2.5 py-1 text-left"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
       >
-        <span aria-hidden className="tag-accent">
-          {open ? '−' : '+'}
-        </span>
-        <span className="text-sm text-muted group-hover:text-ink">{explainer.question}</span>
+        <span className="text-[0.9375rem] text-ink">{explainer.question}</span>
+        <motion.span
+          aria-hidden
+          animate={{ rotate: open ? 45 : 0 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+          className="shrink-0 text-lg leading-none text-accent-soft"
+        >
+          +
+        </motion.span>
       </button>
 
       <AnimatePresence initial={false}>
@@ -38,12 +43,15 @@ export function Explainer({ educationKey }: { educationKey: string }) {
             initial={reduced ? false : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={reduced ? undefined : { height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="max-w-readable space-y-3 pb-2 pt-2">
+            <div className="space-y-3 px-4 pb-4">
               {explainer.answer.map((paragraph) => (
-                <p key={paragraph.slice(0, 32)} className="text-sm leading-relaxed text-muted">
+                <p
+                  key={paragraph.slice(0, 32)}
+                  className="text-[0.9375rem] leading-relaxed text-muted"
+                >
                   {paragraph}
                 </p>
               ))}

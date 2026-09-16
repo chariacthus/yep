@@ -11,14 +11,38 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypt
  *      state without a database.
  */
 
+/**
+ * Generated once per process when APP_SECRET is unset, so the app runs with no
+ * configuration at all.
+ *
+ * This secret only ever protects two things, and neither needs to survive a
+ * restart: rate-limit counter keys (which are meant to expire anyway) and the
+ * verification cookie (which is only used when email verification is switched
+ * on). Losing it on restart resets some counters and signs people out. Nothing
+ * is stored under it, because nothing is stored at all.
+ *
+ * A real deployment should still set APP_SECRET — across several instances an
+ * ephemeral one means each instance keeps its own rate-limit counters — so we
+ * say so once at startup rather than refusing to run.
+ */
+const ephemeralSecret = randomBytes(32).toString('base64');
+let warnedAboutEphemeralSecret = false;
+
 function appSecret(): string {
-  const secret = process.env.APP_SECRET;
-  if (!secret || secret.length < 16) {
-    throw new Error(
-      'APP_SECRET is not set or is too short. Generate one with: openssl rand -base64 32',
-    );
+  const configured = process.env.APP_SECRET;
+  if (configured && configured.length >= 16) return configured;
+
+  if (!warnedAboutEphemeralSecret) {
+    warnedAboutEphemeralSecret = true;
+    if (process.env.NODE_ENV === 'production') {
+      process.stderr.write(
+        'APP_SECRET is not set, so a temporary one was generated for this process. ' +
+          'Rate limits will not be shared between instances and will reset on restart. ' +
+          'Set APP_SECRET to a random value (openssl rand -base64 32) to fix that.\n',
+      );
+    }
   }
-  return secret;
+  return ephemeralSecret;
 }
 
 export function sha1Hex(value: string): string {

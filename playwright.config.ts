@@ -33,5 +33,11 @@ export default defineConfig({
         url: 'http://localhost:3000',
         reuseExistingServer: true,
         timeout: 60_000,
+        env: {
+          // A short budget keeps the suite quick. The sweep still reports
+          // honest partial completion, which is what the tests check.
+          SCAN_BUDGET_MS: '25000',
+          SCAN_USERNAME_CONCURRENCY: '32',
+        },
       },
 });

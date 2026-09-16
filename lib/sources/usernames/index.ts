@@ -29,8 +29,10 @@ import { prepareSites } from './wmn';
  * Gravatar-verified link to the same host, say — corroborates it.
  */
 
-const DEFAULT_CONCURRENCY = 24;
-const PROBE_TIMEOUT_MS = 6000;
+const DEFAULT_CONCURRENCY = 32;
+// Sites that have not answered in four seconds are almost always blocking us
+// rather than being slow; waiting longer just spends the budget.
+const PROBE_TIMEOUT_MS = 4000;
 
 function concurrency(): number {
   const configured = Number(process.env.SCAN_USERNAME_CONCURRENCY);

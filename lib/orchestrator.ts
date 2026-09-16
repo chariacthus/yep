@@ -73,7 +73,7 @@ export interface ScanOptions {
   budgetMs: number;
 }
 
-const DEFAULT_BUDGET_MS = 240_000;
+const DEFAULT_BUDGET_MS = 120_000;
 
 export function scanBudgetMs(): number {
   const configured = Number(process.env.SCAN_BUDGET_MS);

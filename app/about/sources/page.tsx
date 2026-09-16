@@ -20,11 +20,12 @@ export const metadata = {
  */
 export default function SourcesPage() {
   return (
-    <div className="max-w-readable space-y-12 py-12">
+    <div className="mx-auto max-w-readable space-y-10 py-12">
       <header>
-        <p className="tag-accent">Method</p>
-        <h1 className="display mt-4 text-4xl">What we check, and what we cannot</h1>
-        <p className="mt-5 leading-relaxed text-muted">
+        <h1 className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] sm:text-[2.5rem]">
+          What we check, and what we cannot
+        </h1>
+        <p className="mt-4 text-[1.0625rem] leading-relaxed text-muted">
           No service can search the whole internet, and this one does not pretend to. It queries a
           specific set of sources, each with its own coverage and limits. Everything below reflects
           how this particular deployment is configured right now.
@@ -32,25 +33,29 @@ export default function SourcesPage() {
       </header>
 
       <section>
-        <h2 className="display text-2xl">Sources</h2>
-        <ul className="mt-4">
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">Sources</h2>
+        <ul className="mt-4 space-y-2">
           {SOURCES.map((source) => {
             const configured = isConfigured(source);
             return (
-              <li key={source.id} className="rule flex items-start justify-between gap-6 py-4">
+              <li key={source.id} className="glass flex items-start justify-between gap-5 p-4 sm:p-5">
                 <div className="min-w-0">
-                  <p className="text-[0.9375rem] text-ink">{source.label}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted">{source.description}</p>
-                  <p className="mt-2 font-mono text-[0.6875rem] text-faint">
-                    needs {source.requires.join(' + ')} ·{' '}
+                  <p className="text-[1.0625rem] font-medium text-ink">{source.label}</p>
+                  <p className="mt-1 text-[0.9375rem] leading-relaxed text-muted">
+                    {source.description}
+                  </p>
+                  <p className="mt-2 text-[0.75rem] text-faint">
+                    Needs {source.requires.join(' + ')} ·{' '}
                     {source.sendsRawEmail
                       ? 'receives your email address'
                       : 'never receives your email address'}
                     {!configured ? ` · missing ${missingEnv(source).join(', ')}` : ''}
                   </p>
                 </div>
-                <span className={`tag shrink-0 ${configured ? 'text-accent' : 'text-faint'}`}>
-                  {configured ? 'active' : 'not set up'}
+                <span
+                  className={`pill shrink-0 ${configured ? 'bg-good/15 text-good' : 'text-faint'}`}
+                >
+                  {configured ? 'Active' : 'Not set up'}
                 </span>
               </li>
             );
@@ -59,8 +64,8 @@ export default function SourcesPage() {
       </section>
 
       <section>
-        <h2 className="display text-2xl">What we deliberately do not use</h2>
-        <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">What we deliberately do not use</h2>
+        <ul className="mt-4 space-y-3 text-[0.9375rem] leading-relaxed text-muted">
           <li>
             <strong className="text-ink">Services that return plaintext passwords</strong> — such as
             Dehashed or Snusbase. This tool never handles credentials, even yours, so a source whose
@@ -95,12 +100,12 @@ export default function SourcesPage() {
       </section>
 
       <section>
-        <h2 className="display text-2xl">Tried and rejected</h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted">
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">Tried and rejected</h2>
+        <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
           Sources we built against and then dropped, because testing showed they could not give an
           honest answer.
         </p>
-        <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+        <ul className="mt-4 space-y-3 text-[0.9375rem] leading-relaxed text-muted">
           <li>
             <strong className="text-ink">PyPI.</strong> Its user pages answer HTTP 200 for every
             username, real or not, because they sit behind a bot challenge. A simple existence check
@@ -117,8 +122,8 @@ export default function SourcesPage() {
       </section>
 
       <section>
-        <h2 className="display text-2xl">Data broker directory</h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted">
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">Data broker directory</h2>
+        <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
           {brokerDirectoryMeta.total} brokers, of which {brokerDirectoryMeta.californiaRegisteredCount}{' '}
           are in California&apos;s official registry.{' '}
           {brokerDirectoryMeta.californiaRegistryIncluded
@@ -128,8 +133,8 @@ export default function SourcesPage() {
       </section>
 
       <section>
-        <h2 className="display text-2xl">Credits and licences</h2>
-        <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">Credits and licences</h2>
+        <ul className="mt-4 space-y-3 text-[0.9375rem] leading-relaxed text-muted">
           <li>
             Breach data from{' '}
             <a
@@ -174,8 +179,8 @@ export default function SourcesPage() {
         </ul>
       </section>
 
-      <p className="rule pt-6">
-        <Link href="/" className="tag-accent hover:underline">
+      <p className="pt-2">
+        <Link href="/" className="btn-quiet">
           ← Back to the scanner
         </Link>
       </p>

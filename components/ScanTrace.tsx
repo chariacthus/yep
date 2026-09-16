@@ -24,16 +24,16 @@ export interface TraceLine {
 
 const TONE: Record<TraceLine['tone'], string> = {
   run: 'text-faint',
-  hit: 'text-accent',
+  hit: 'text-accent-soft',
   miss: 'text-muted',
   warn: 'text-alarm',
 };
 
-const MARK: Record<TraceLine['tone'], string> = {
-  run: '·',
-  hit: '+',
-  miss: '—',
-  warn: '!',
+const DOT: Record<TraceLine['tone'], string> = {
+  run: 'bg-faint/50',
+  hit: 'bg-accent',
+  miss: 'bg-good/70',
+  warn: 'bg-alarm',
 };
 
 export function ScanTrace({ lines }: { lines: TraceLine[] }) {
@@ -45,8 +45,8 @@ export function ScanTrace({ lines }: { lines: TraceLine[] }) {
   }, [lines, reduced]);
 
   return (
-    <div className="rule pt-4">
-      <p className="tag mb-3">Trace</p>
+    <div className="glass p-4 sm:p-5">
+      <p className="label mb-3">Live trace</p>
       {/*
         The feed scrolls under a fade rather than cutting a line in half, so a
         partially visible row reads as history scrolling away rather than as a
@@ -59,7 +59,7 @@ export function ScanTrace({ lines }: { lines: TraceLine[] }) {
           WebkitMaskImage: 'linear-gradient(to bottom, transparent, #000 2.5rem)',
         }}
       >
-        <ul className="space-y-1 font-mono text-xs">
+        <ul className="space-y-1.5">
           <AnimatePresence initial={false}>
             {lines.map((line) => (
               <motion.li
@@ -69,14 +69,15 @@ export function ScanTrace({ lines }: { lines: TraceLine[] }) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="flex items-baseline gap-2.5"
+                className="flex items-center gap-2.5 text-[0.8125rem]"
               >
-                <span aria-hidden className={`w-2 shrink-0 ${TONE[line.tone]}`}>
-                  {MARK[line.tone]}
-                </span>
+                <span
+                  aria-hidden
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT[line.tone]}`}
+                />
                 <span className="truncate text-muted">{line.label}</span>
                 {line.detail ? (
-                  <span className={`ml-auto shrink-0 tabular ${TONE[line.tone]}`}>
+                  <span className={`mono-xs ml-auto shrink-0 ${TONE[line.tone]}`}>
                     {line.detail}
                   </span>
                 ) : null}
@@ -86,7 +87,7 @@ export function ScanTrace({ lines }: { lines: TraceLine[] }) {
         </ul>
         <div ref={endRef} />
       </div>
-      <p className="cursor mt-2 font-mono text-xs text-faint" aria-hidden />
+      <p className="cursor mt-2 text-xs text-faint" aria-hidden />
     </div>
   );
 }

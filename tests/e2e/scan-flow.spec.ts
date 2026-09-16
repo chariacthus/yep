@@ -44,7 +44,7 @@ test('a person can scan without any email step and gets an honest report', async
   // With no keys configured, the report must say so rather than implying a
   // clean result.
   await expect(page.getByText(/only partly completed/)).toBeVisible();
-  await expect(page.getByText(/\d+ \/ \d+ checked/)).toBeVisible();
+  await expect(page.getByText(/\d+ of \d+ sources checked/)).toBeVisible();
 
   // Ownership was asserted, not proved, and the report must say so.
   await expect(page.getByText(/taken your word for it/)).toBeVisible();

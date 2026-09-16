@@ -9,31 +9,31 @@ import { Counter } from './Counter';
 /**
  * What was checked, and what was not.
  *
- * This is the honesty of the product made visible. A scan that could not reach
- * four of its sources has not "found nothing" — it has not looked — and saying
- * so plainly matters more than a clean-looking report.
+ * This panel is the honesty of the product made visible. A scan that could not
+ * reach four of its sources has not "found nothing" — it has not looked — and
+ * saying so plainly matters more than a clean-looking report.
  */
 
 const STATUS_LABELS: Record<SourceStatus, string> = {
-  pending: 'queued',
-  running: 'running',
-  ok: 'checked',
-  partial: 'partial',
-  failed: 'unreachable',
-  not_configured: 'not set up',
-  rate_limited: 'rate-limited',
-  skipped: 'not checked',
+  pending: 'Queued',
+  running: 'Checking',
+  ok: 'Checked',
+  partial: 'Partial',
+  failed: 'Unreachable',
+  not_configured: 'Not set up',
+  rate_limited: 'Rate-limited',
+  skipped: 'Not checked',
 };
 
 const STATUS_TONE: Record<SourceStatus, string> = {
-  pending: 'text-faint/60',
-  running: 'text-accent',
-  ok: 'text-muted',
-  partial: 'text-alarm',
-  failed: 'text-alarm',
-  not_configured: 'text-faint',
-  rate_limited: 'text-alarm',
-  skipped: 'text-faint',
+  pending: 'bg-glass/[0.06] text-faint',
+  running: 'bg-accent/18 text-accent-soft',
+  ok: 'bg-good/15 text-good',
+  partial: 'bg-warn/15 text-warn',
+  failed: 'bg-alarm/15 text-alarm',
+  not_configured: 'bg-glass/[0.06] text-faint',
+  rate_limited: 'bg-warn/15 text-warn',
+  skipped: 'bg-glass/[0.06] text-faint',
 };
 
 const INCOMPLETE: SourceStatus[] = ['partial', 'failed', 'rate_limited', 'not_configured'];
@@ -62,37 +62,35 @@ export function CoveragePanel({
   ).length;
 
   return (
-    <section className="rule">
+    <section className="glass overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={expanded}
         disabled={scanning}
-        className="flex w-full items-baseline justify-between gap-4 py-4 text-left disabled:cursor-default"
+        className="flex w-full items-center justify-between gap-4 p-4 text-left disabled:cursor-default sm:p-5"
       >
-        <span className="tag">
-          {scanning ? (
-            <>
-              Checking {running} source{running === 1 ? '' : 's'}
-            </>
-          ) : (
-            'Coverage'
-          )}
-        </span>
-        <span className="flex items-baseline gap-3">
-          <span className="font-mono text-xs text-muted">
-            <Counter value={scanning ? settled : checked} className="text-ink" /> / {coverage.length}
-            {scanning ? ' done' : ' checked'}
+        <span className="min-w-0">
+          <span className="block text-[1.0625rem] font-medium text-ink">
+            {scanning ? `Checking ${running} source${running === 1 ? '' : 's'}` : 'Coverage'}
           </span>
-          {!scanning && incomplete.length > 0 ? (
-            <span className="font-mono text-xs text-alarm">{incomplete.length} not checked</span>
-          ) : null}
-          {!scanning ? (
-            <span aria-hidden className="tag">
-              {expanded ? '−' : '+'}
-            </span>
-          ) : null}
+          <span className="mt-1 block text-[0.8125rem] text-faint">
+            <Counter value={scanning ? settled : checked} /> of {coverage.length} sources{' '}
+            {scanning ? 'done' : 'checked'}
+            {!scanning && incomplete.length > 0 ? ` · ${incomplete.length} not checked` : ''}
+          </span>
         </span>
+
+        {!scanning ? (
+          <motion.span
+            aria-hidden
+            animate={{ rotate: expanded ? 45 : 0 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+            className="shrink-0 text-lg leading-none text-faint"
+          >
+            +
+          </motion.span>
+        ) : null}
       </button>
 
       <AnimatePresence initial={false}>
@@ -102,10 +100,10 @@ export function CoveragePanel({
             initial={reduced ? false : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={reduced ? undefined : { height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <ul className="border-t border-rule/60 pb-4">
+            <ul className="divide-hair border-t border-glass/[0.07]">
               {coverage.map((entry) => {
                 const live = progress[entry.id];
                 const isRunning = entry.status === 'running';
@@ -114,20 +112,20 @@ export function CoveragePanel({
                   <motion.li
                     key={entry.id}
                     layout={reduced ? false : 'position'}
-                    className="grid grid-cols-[1fr_auto] items-baseline gap-4 border-b border-rule/40 py-2.5 last:border-b-0"
+                    className="flex items-start justify-between gap-4 px-4 py-3 sm:px-5"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm text-ink">{entry.label}</p>
-                      <p className="mt-0.5 text-xs leading-relaxed text-faint">
+                      <p className="text-[0.9375rem] text-ink">{entry.label}</p>
+                      <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-faint">
                         {entry.detail ?? entry.description}
                       </p>
                       {entry.status === 'partial' && entry.checked !== undefined && entry.total ? (
-                        <p className="mt-0.5 font-mono text-xs text-alarm">
+                        <p className="mt-1 text-[0.8125rem] text-warn">
                           reached {entry.checked} of {entry.total} — the rest are unknown, not clear
                         </p>
                       ) : null}
                       {entry.withheld ? (
-                        <p className="mt-0.5 font-mono text-xs text-alarm">
+                        <p className="mt-1 text-[0.8125rem] text-warn">
                           {entry.withheld} result{entry.withheld === 1 ? '' : 's'} withheld from a
                           sensitive category
                         </p>
@@ -137,27 +135,32 @@ export function CoveragePanel({
                     <div className="shrink-0 text-right">
                       {live && isRunning ? (
                         <>
-                          <span className="font-mono text-xs text-accent">
+                          <span className="mono-xs text-accent-soft">
                             <Counter value={live.done} /> / {live.total}
                           </span>
                           <span
                             aria-hidden
-                            className="mt-1 block h-px w-24 overflow-hidden bg-rule"
+                            className="mt-1.5 block h-1 w-24 overflow-hidden rounded-full bg-glass/10"
                           >
                             <motion.span
-                              className="block h-full bg-accent"
+                              className="block h-full rounded-full bg-accent"
                               initial={false}
                               animate={{
                                 width: `${Math.round((live.done / Math.max(1, live.total)) * 100)}%`,
                               }}
-                              transition={{ duration: 0.4, ease: 'easeOut' }}
+                              transition={{ duration: 0.45, ease: 'easeOut' }}
                             />
                           </span>
                         </>
                       ) : (
-                        <span className={`tag ${STATUS_TONE[entry.status]}`}>
+                        <span className={`pill ${STATUS_TONE[entry.status]}`}>
+                          {isRunning ? (
+                            <span
+                              aria-hidden
+                              className="h-1.5 w-1.5 animate-pulse rounded-full bg-current"
+                            />
+                          ) : null}
                           {STATUS_LABELS[entry.status]}
-                          {isRunning ? <span className="ml-1 animate-pulse">●</span> : null}
                         </span>
                       )}
                     </div>

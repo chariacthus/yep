@@ -289,13 +289,14 @@ export function ScanFlow() {
   return (
     <AnimatePresence mode="wait" initial={false}>
       {stage === 'form' ? (
-        <motion.div key="form" {...(reduced ? {} : stageMotion)} className="py-10 sm:py-16">
-          <header className="max-w-readable">
-            <p className="tag-accent">Open a case</p>
-            <h1 className="display mt-4 text-4xl sm:text-5xl">
-              Find out where you are exposed
+        <motion.div key="form" {...(reduced ? {} : stageMotion)} className="py-10 sm:py-14">
+          <header className="mx-auto max-w-readable">
+            <h1 className="text-[2.5rem] font-semibold leading-[1.08] tracking-[-0.03em] sm:text-[3.25rem]">
+              Find out where
+              <br />
+              you are exposed
             </h1>
-            <p className="mt-5 text-[0.9375rem] leading-relaxed text-muted">
+            <p className="mt-5 text-[1.0625rem] leading-relaxed text-muted">
               Enter your own details. We check breach records, public profiles, archived pages and
               around seven hundred websites, then explain what each result means and what you can do
               about it. Nothing is stored — the report exists in this tab and nowhere else.
@@ -307,11 +308,11 @@ export function ScanFlow() {
               submitEvent.preventDefault();
               void runScan();
             }}
-            className="mt-12 max-w-readable space-y-10"
+            className="mx-auto mt-10 max-w-readable space-y-5"
           >
-            <div className="space-y-8">
+            <div className="glass space-y-5 p-5 sm:p-6">
               <div>
-                <label htmlFor="email" className="tag block">
+                <label htmlFor="email" className="label mb-2 block">
                   Email address
                 </label>
                 <input
@@ -321,68 +322,76 @@ export function ScanFlow() {
                   autoComplete="email"
                   value={email}
                   onChange={(changeEvent) => setEmail(changeEvent.target.value)}
-                  className="field mt-2 text-lg"
+                  className="field"
                   placeholder="you@example.com"
                 />
               </div>
 
-              <div className="grid gap-8 sm:grid-cols-2">
+              <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="username" className="tag block">
-                    Username <span className="normal-case tracking-normal">(optional)</span>
+                  <label htmlFor="username" className="label mb-2 block">
+                    Username <span className="text-faint">(optional)</span>
                   </label>
                   <input
                     id="username"
                     value={username}
                     onChange={(changeEvent) => setUsername(changeEvent.target.value)}
-                    className="field mt-2"
+                    className="field"
                     placeholder="janeo"
                   />
-                  <p className="mt-2 font-mono text-[0.6875rem] leading-relaxed text-faint">
+                  <p className="mt-2 text-[0.75rem] leading-relaxed text-faint">
                     Unlocks the seven-hundred-site sweep and the developer platforms.
                   </p>
                 </div>
                 <div>
-                  <label htmlFor="name" className="tag block">
-                    Name <span className="normal-case tracking-normal">(optional)</span>
+                  <label htmlFor="name" className="label mb-2 block">
+                    Name <span className="text-faint">(optional)</span>
                   </label>
                   <input
                     id="name"
                     value={name}
                     onChange={(changeEvent) => setName(changeEvent.target.value)}
-                    className="field mt-2"
+                    className="field"
                     placeholder="Jane Okonkwo"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="locality" className="tag block">
-                  Town or city <span className="normal-case tracking-normal">(optional)</span>
+                <label htmlFor="locality" className="label mb-2 block">
+                  Town or city <span className="text-faint">(optional)</span>
                 </label>
                 <input
                   id="locality"
                   value={locality}
                   onChange={(changeEvent) => setLocality(changeEvent.target.value)}
-                  className="field mt-2"
+                  className="field"
                   placeholder="Bristol"
                 />
-                <p className="mt-2 font-mono text-[0.6875rem] leading-relaxed text-faint">
+                <p className="mt-2 text-[0.75rem] leading-relaxed text-faint">
                   Only used to tell you apart from other people with your name.
                 </p>
               </div>
             </div>
 
             {rawEmailSources.length > 0 ? (
-              <fieldset className="rule pt-6">
-                <legend className="tag">Services that receive your address</legend>
-                <p className="mt-3 max-w-readable text-sm leading-relaxed text-muted">
+              // A real <fieldset>/<legend> cuts a notch in the panel border, which
+              // the glass edge makes obvious. A labelled group gives the same
+              // semantics with one element and an unbroken edge.
+              <div role="group" aria-labelledby="consent-heading" className="glass p-5 sm:p-6">
+                <h2 id="consent-heading" className="text-[1.0625rem] font-medium text-ink">
+                  Services that receive your address
+                </h2>
+                <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted">
                   Most checks send only a one-way hash. These need the address itself. Turn off any
                   you would rather not use — the report will say they were skipped.
                 </p>
-                <div className="mt-4 space-y-3">
+                <div className="mt-4 space-y-2">
                   {rawEmailSources.map((source) => (
-                    <label key={source.id} className="flex cursor-pointer items-start gap-3">
+                    <label
+                      key={source.id}
+                      className="well flex cursor-pointer items-start gap-3 p-3.5"
+                    >
                       <input
                         type="checkbox"
                         checked={!declined.has(source.id)}
@@ -394,18 +403,20 @@ export function ScanFlow() {
                             return next;
                           })
                         }
-                        className="mt-1 accent-[rgb(var(--accent))]"
+                        className="mt-1 h-4 w-4 accent-[rgb(var(--accent))]"
                       />
                       <span>
-                        <span className="block text-sm text-ink">{source.label}</span>
-                        <span className="block text-sm leading-relaxed text-muted">
+                        <span className="block text-[0.9375rem] font-medium text-ink">
+                          {source.label}
+                        </span>
+                        <span className="mt-0.5 block text-[0.875rem] leading-relaxed text-muted">
                           {source.description}
                         </span>
                       </span>
                     </label>
                   ))}
                 </div>
-              </fieldset>
+              </div>
             ) : null}
 
             {/*
@@ -413,75 +424,87 @@ export function ScanFlow() {
               between the tool and casual use on other people. It is not much,
               but it is explicit, and it is what the terms rest on.
             */}
-            <label className="flex cursor-pointer items-start gap-3 border-l-2 border-rule pl-4">
+            <label className="glass flex cursor-pointer items-start gap-3 p-4 sm:p-5">
               <input
                 type="checkbox"
                 required
                 checked={affirmed}
                 onChange={(changeEvent) => setAffirmed(changeEvent.target.checked)}
-                className="mt-1 accent-[rgb(var(--accent))]"
+                className="mt-0.5 h-4 w-4 accent-[rgb(var(--accent))]"
               />
-              <span className="text-sm leading-relaxed text-muted">
+              <span className="text-[0.9375rem] leading-relaxed text-muted">
                 These details are mine. I am not using this to look up another person, or for
                 employment, tenancy or credit screening.
               </span>
             </label>
 
-            {error ? <p className="text-sm text-alarm">{error}</p> : null}
+            {error ? (
+              <p className="rounded-glass-sm border border-alarm/30 bg-alarm/10 px-4 py-3 text-[0.9375rem] text-alarm">
+                {error}
+              </p>
+            ) : null}
 
             <div className="flex flex-wrap items-center gap-4">
-              <button type="submit" disabled={busy || !email || !affirmed} className="btn-primary">
+              <motion.button
+                type="submit"
+                whileTap={reduced ? undefined : { scale: 0.97 }}
+                disabled={busy || !email || !affirmed}
+                className="btn-primary"
+              >
                 {busy ? 'Opening…' : 'Begin scan'}
-              </button>
-              <span className="font-mono text-[0.6875rem] text-faint">
+              </motion.button>
+              <span className="text-[0.8125rem] text-faint">
                 No account. No email. Nothing kept.
               </span>
             </div>
           </form>
         </motion.div>
       ) : (
-        <motion.div key="report" {...(reduced ? {} : stageMotion)} className="py-10 sm:py-14">
-          <header className="rule-none flex flex-wrap items-baseline justify-between gap-4 pb-6">
+        <motion.div
+          key="report"
+          {...(reduced ? {} : stageMotion)}
+          className="mx-auto max-w-readable space-y-4 py-10 sm:py-14"
+        >
+          <header className="flex flex-wrap items-end justify-between gap-5">
             <div>
-              <p className="tag-accent">{stage === 'scanning' ? 'In progress' : 'Case file'}</p>
-              <h1 className="display mt-3 text-3xl sm:text-4xl">
+              <h1 className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] sm:text-[2.5rem]">
                 {stage === 'scanning' ? 'Scanning' : 'Exposure report'}
               </h1>
+              {stage === 'scanning' ? (
+                <p className="mt-2 text-[0.9375rem] text-muted">
+                  Results appear as they arrive. You can start reading before it finishes.
+                </p>
+              ) : null}
             </div>
+
             {stage === 'report' ? (
-              <dl className="flex gap-6 font-mono text-xs">
-                <div>
-                  <dt className="tag">Confirmed</dt>
-                  <dd className="mt-1 text-lg text-accent">
-                    <Counter value={summary.confirmed} />
-                  </dd>
-                </div>
-                <div>
-                  <dt className="tag">Likely</dt>
-                  <dd className="mt-1 text-lg text-ink">
-                    <Counter value={summary.likely} />
-                  </dd>
-                </div>
-                <div>
-                  <dt className="tag">Possible</dt>
-                  <dd className="mt-1 text-lg text-muted">
-                    <Counter value={summary.possible} />
-                  </dd>
-                </div>
+              <dl className="flex gap-2">
+                {(
+                  [
+                    ['Confirmed', summary.confirmed, 'text-accent-soft'],
+                    ['Likely', summary.likely, 'text-ink'],
+                    ['Possible', summary.possible, 'text-muted'],
+                  ] as const
+                ).map(([label, value, tone]) => (
+                  <div key={label} className="glass min-w-[5.5rem] px-4 py-3 text-center">
+                    <dd className={`text-[1.75rem] font-semibold leading-none ${tone}`}>
+                      <Counter value={value} />
+                    </dd>
+                    <dt className="mt-1.5 text-[0.75rem] text-faint">{label}</dt>
+                  </div>
+                ))}
               </dl>
             ) : usernameProgress ? (
-              <p className="font-mono text-sm text-muted">
-                <Counter value={usernameProgress.done} className="text-accent" /> /{' '}
-                {usernameProgress.total} sites
-              </p>
+              <div className="glass px-4 py-3 text-center">
+                <p className="text-[1.75rem] font-semibold leading-none text-accent-soft">
+                  <Counter value={usernameProgress.done} />
+                </p>
+                <p className="mt-1.5 text-[0.75rem] text-faint">
+                  of {usernameProgress.total} sites
+                </p>
+              </div>
             ) : null}
           </header>
-
-          {stage === 'scanning' ? (
-            <p className="max-w-readable pb-6 text-sm leading-relaxed text-muted">
-              Results appear as they arrive. You can start reading before it finishes.
-            </p>
-          ) : null}
 
           <CoveragePanel
             coverage={coverage}
@@ -492,27 +515,23 @@ export function ScanFlow() {
           {stage === 'scanning' ? <ScanTrace lines={trace} /> : null}
 
           {stage === 'report' ? (
-            <div className="space-y-4 pt-8">
-              {ownershipAsserted ? (
-                <p className="max-w-readable border-l-2 border-rule-strong pl-4 text-sm leading-relaxed text-muted">
-                  {OWNERSHIP_CAVEAT}
-                </p>
-              ) : null}
-
+            <div className="space-y-3">
               {partial ? (
-                <div className="max-w-readable space-y-3 border-l-2 border-accent pl-4">
-                  <p className="text-sm leading-relaxed text-muted">
-                    <span className="text-ink">This scan was only partly completed.</span> At least
-                    one source could not be checked, so anything it might have found is unknown
-                    rather than absent. Do not read this as an all-clear.
+                <div className="glass space-y-3 p-4 sm:p-5">
+                  <p className="text-[0.9375rem] leading-relaxed text-muted">
+                    <span className="font-medium text-warn">
+                      This scan was only partly completed.
+                    </span>{' '}
+                    At least one source could not be checked, so anything it might have found is
+                    unknown rather than absent. Do not read this as an all-clear.
                   </p>
                   <Explainer educationKey="coverage" />
                 </div>
               ) : null}
 
               {withheld > 0 ? (
-                <p className="max-w-readable border-l-2 border-rule-strong pl-4 text-sm leading-relaxed text-muted">
-                  <span className="text-ink">
+                <p className="glass p-4 text-[0.9375rem] leading-relaxed text-muted sm:p-5">
+                  <span className="font-medium text-ink">
                     {withheld} result{withheld === 1 ? ' was' : 's were'} withheld.
                   </span>{' '}
                   They come from categories — adult, dating, political, health — where being listed
@@ -520,40 +539,51 @@ export function ScanFlow() {
                   tell that you are the person being searched for, so these are not shown to anyone.
                 </p>
               ) : null}
+
+              {ownershipAsserted ? (
+                <p className="px-1 text-[0.8125rem] leading-relaxed text-faint">
+                  {OWNERSHIP_CAVEAT}
+                </p>
+              ) : null}
             </div>
           ) : null}
 
-          {error ? <p className="pt-6 text-sm text-alarm">{error}</p> : null}
+          {error ? (
+            <p className="rounded-glass-sm border border-alarm/30 bg-alarm/10 px-4 py-3 text-[0.9375rem] text-alarm">
+              {error}
+            </p>
+          ) : null}
 
           {findings.length === 0 && stage === 'report' ? (
-            <div className="max-w-readable pt-10">
-              <p className="text-[0.9375rem] text-ink">
+            <div className="glass p-5 sm:p-6">
+              <p className="text-[1.0625rem] font-medium text-ink">
                 Nothing was found in the sources we checked.
               </p>
-              <p className="mt-2 text-sm leading-relaxed text-muted">
+              <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted">
                 That is genuinely good news for those sources, but it is not the whole internet.
                 Open the coverage list above to see exactly what was checked.
               </p>
             </div>
           ) : null}
 
-          <div className="pt-4">
+          <div className="space-y-8 pt-4">
             {SECTION_ORDER.map((section) => {
               const items = grouped.get(section);
               if (!items || items.length === 0) return null;
 
               return (
-                <section key={section} className="pt-10">
-                  <header className="flex items-baseline justify-between gap-4 pb-1">
-                    <h2 className="display text-2xl">{SECTION_LABELS[section]}</h2>
-                    <span className="tag">{items.length}</span>
+                <section key={section}>
+                  <header className="mb-3 flex items-center gap-2.5 px-1">
+                    <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">
+                      {SECTION_LABELS[section]}
+                    </h2>
+                    <span className="pill text-faint">{items.length}</span>
                   </header>
-                  <ul>
-                    {items.map((finding, index) =>
+                  <ul className="space-y-2.5">
+                    {items.map((finding) =>
                       finding.flags?.sensitive && !revealed.has(finding.id) ? (
                         <SensitiveEntry
                           key={finding.id}
-                          index={index + 1}
                           onReveal={() =>
                             setRevealed((current) => new Set(current).add(finding.id))
                           }
@@ -562,7 +592,6 @@ export function ScanFlow() {
                         <FindingEntry
                           key={finding.id}
                           finding={finding}
-                          index={index + 1}
                           verdict={verdicts[finding.id]}
                           onVerdict={(verdict) => applyVerdict(finding, verdict)}
                         />
@@ -577,10 +606,10 @@ export function ScanFlow() {
           {stage === 'report' ? <RemovalSection opportunities={opportunities} /> : null}
 
           {stage === 'report' ? (
-            <div className="rule mt-12 space-y-3 pt-8">
+            <div className="space-y-2.5 pt-6">
               <Explainer educationKey="confidence" />
               <Explainer educationKey="no_passwords" />
-              <p className="max-w-readable pt-3 font-mono text-[0.6875rem] leading-relaxed text-faint">
+              <p className="px-1 pt-2 text-[0.8125rem] leading-relaxed text-faint">
                 This report exists only in this browser tab. Closing it discards everything — we
                 kept no copy.
               </p>

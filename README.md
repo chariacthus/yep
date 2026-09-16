@@ -22,13 +22,21 @@ It is built around five rules that shaped nearly every technical decision here:
 
 ```bash
 npm install
-cp .env.example .env.local     # set APP_SECRET — that is all
 npm run dev
 ```
 
-`APP_SECRET` is the only variable the app needs. No email service, no database,
-no API keys, no cost. Eleven of the fifteen sources run with no configuration at
-all; the rest report themselves as "not set up" rather than failing quietly.
+Then open <http://localhost:3000>. That is the whole setup — no `.env` file, no
+account, no email service, no API keys, no cost.
+
+Eleven of the fifteen sources run with no configuration at all. The other four
+need a paid key and report themselves as "not set up" in the report rather than
+failing quietly, so a scan without them is still useful and still honest about
+what it could not reach.
+
+For a real deployment, set `APP_SECRET` to a random value
+(`openssl rand -base64 32`). Without it the app generates a temporary one per
+process, which works fine but means rate-limit counters are not shared between
+instances and reset on restart.
 
 ## How a scan works
 
