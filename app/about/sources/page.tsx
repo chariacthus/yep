@@ -64,6 +64,27 @@ export default function SourcesPage() {
       </section>
 
       <section>
+        <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">How we pick what to check</h2>
+        <ul className="mt-4 space-y-3 text-[0.9375rem] leading-relaxed text-muted">
+          <li>
+            <strong className="text-ink">Handles have to earn the full sweep.</strong> The one you
+            type is always swept. Ones we build from your address or name are first tried against
+            about forty mainstream sites; if a guess exists on none of them, we drop it rather than
+            make seven hundred more requests for a string we invented.
+          </li>
+          <li>
+            <strong className="text-ink">Your name and town raise confidence, never results.</strong>{' '}
+            They are matched against what a profile already publishes. A town only counts once the
+            name has matched — plenty of strangers live in yours.
+          </li>
+          <li>
+            <strong className="text-ink">A username match alone stays &ldquo;possible&rdquo;.</strong>{' '}
+            Handles are not unique. Something else has to line up before a result is called likely.
+          </li>
+        </ul>
+      </section>
+
+      <section>
         <h2 className="text-[1.375rem] font-semibold tracking-[-0.02em]">What we deliberately do not use</h2>
         <ul className="mt-4 space-y-3 text-[0.9375rem] leading-relaxed text-muted">
           <li>

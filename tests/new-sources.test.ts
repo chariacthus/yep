@@ -146,7 +146,8 @@ describe('Docker Hub', () => {
       expect(finding.dataTypes).toEqual(
         expect.arrayContaining(['name', 'geolocation', 'employer']),
       );
-      expect(finding.whyItMatters).toContain('your name, your employer and your location');
+      expect(finding.whyItMatters).toContain('a name, an employer and a location');
+      expect(finding.whyItMatters).toContain('The name on it is the one you entered.');
       expect(finding.occurredAt?.year).toBe(2015);
       // The profile name matching the one searched for is real corroboration.
       expect(finding.confidence.signals.map((s) => s.id)).toContain('profile_corroborates_name');
@@ -186,7 +187,7 @@ describe('npm', () => {
 
     try {
       const { findings } = await collect(npmSource, context('someone'));
-      expect(findings[0]!.title).toContain('42 npm packages');
+      expect(findings[0]!.title).toContain('42 packages');
       expect(findings[0]!.whyItMatters).toContain('left-pad');
       expect(findings[0]!.confidence.level).toBe('possible');
     } finally {

@@ -1,8 +1,8 @@
-import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
-import { describeError, HttpError, requestJson } from './http';
+import { requestJson } from './http';
 import { closeAccountAction, legalErasureAction } from '../normalize/removal';
-import type { Emit, ScanContext, Source, SourceOutcome } from './types';
+import { sweepHandles } from './sweep-handles';
+import type { Emit, Handle, ScanContext, Source, SourceOutcome } from './types';
 
 /**
  * The npm registry.
@@ -39,30 +39,31 @@ export const npmSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    const primary = context.handles[0];
-    if (!primary) return { status: 'skipped', reason: 'No username to search for' };
+    if (context.handles.length === 0) {
+      return { status: 'skipped', reason: 'No username to search for' };
+    }
 
-    const handle = primary.value;
-
-    try {
+    const check = async (handle: Handle): Promise<number> => {
       const result = await requestJson<SearchResponse>(
-        `${apiBase()}/-/v1/search?text=maintainer:${encodeURIComponent(handle)}&size=${SAMPLE_SIZE}`,
+        `${apiBase()}/-/v1/search?text=maintainer:${encodeURIComponent(handle.value)}&size=${SAMPLE_SIZE}`,
         { signal: context.signal, timeoutMs: 10_000 },
       );
 
       const total = result?.total ?? 0;
-      if (total === 0) return { status: 'ok', checked: 0 };
+      if (total === 0) return 0;
 
       const names = (result?.objects ?? [])
         .map((entry) => entry.package?.name)
         .filter((name): name is string => Boolean(name));
 
+      const profile = `https://www.npmjs.com/~${encodeURIComponent(handle.value)}`;
+
       emit.finding({
-        id: 'npm:packages',
+        id: `npm:packages:${handle.value}`,
         section: 'profiles',
-        title: primary.derived
-          ? `${total} npm package${total === 1 ? '' : 's'} published by ${handle}`
-          : `${total} npm package${total === 1 ? ' is' : 's are'} published under your username`,
+        title: handle.derived
+          ? `npm — ${handle.value}, ${total} package${total === 1 ? '' : 's'}`
+          : `npm — ${total} package${total === 1 ? '' : 's'}`,
         provider: { id: 'npm', label: 'npm registry', url: 'https://www.npmjs.com' },
         origin: { name: 'npm', domain: 'npmjs.com' },
         // No date: the API returns a page of results, so the earliest date in a
@@ -73,13 +74,10 @@ export const npmSource: Source = {
           signals: ['username_exact'],
           nameOnly: false,
           usernameOnly: true,
-          derivedHandle: primary.derived,
-          handleSource: primary.source,
+          derivedHandle: handle.derived,
+          handleSource: handle.source,
         }),
-        evidence: {
-          url: `https://www.npmjs.com/~${encodeURIComponent(handle)}`,
-          label: 'View the packages',
-        },
+        evidence: { url: profile, label: 'View the packages' },
         whyItMatters:
           (names.length > 0 ? `Including ${names.slice(0, 3).join(', ')}. ` : '') +
           'Package metadata usually carries an author email added years ago and never revisited.',
@@ -88,7 +86,7 @@ export const npmSource: Source = {
             type: 'review_account',
             label: 'Check your package.json author fields',
             detail: 'Published versions are frozen, but future releases can use a no-reply address.',
-            url: `https://www.npmjs.com/~${encodeURIComponent(handle)}`,
+            url: profile,
           },
           {
             type: 'review_privacy_settings',
@@ -102,12 +100,9 @@ export const npmSource: Source = {
         educationKey: 'username_reuse',
       });
 
-      return { status: 'ok', checked: 1 };
-    } catch (error) {
-      if (error instanceof HttpError && error.status === 429) {
-        return { status: 'rate_limited', retryAfterSeconds: error.retryAfterSeconds };
-      }
-      return { status: 'failed', reason: describeError(error) };
-    }
+      return 1;
+    };
+
+    return sweepHandles(context, check, { rateLimitStatuses: [429] });
   },
 };

@@ -1,10 +1,10 @@
-import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
-import type { SignalId } from '../confidence/signals';
 import type { DataType } from '../normalize/finding';
-import { describeError, HttpError, requestJson } from './http';
+import { corroborate } from './corroborate';
+import { requestJson } from './http';
 import { closeAccountAction, legalErasureAction } from '../normalize/removal';
-import type { Emit, ScanContext, Source, SourceOutcome } from './types';
+import { sweepHandles } from './sweep-handles';
+import type { Emit, Handle, ScanContext, Source, SourceOutcome } from './types';
 
 /**
  * Docker Hub.
@@ -40,27 +40,20 @@ export const dockerHubSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    const primary = context.handles[0];
-    if (!primary) return { status: 'skipped', reason: 'No username to search for' };
+    if (context.handles.length === 0) {
+      return { status: 'skipped', reason: 'No username to search for' };
+    }
 
-    const handle = primary.value;
-
-    try {
+    const check = async (handle: Handle): Promise<number> => {
       const user = await requestJson<DockerHubUser>(
-        `${apiBase()}/users/${encodeURIComponent(handle)}/`,
+        `${apiBase()}/users/${encodeURIComponent(handle.value)}/`,
         { signal: context.signal, timeoutMs: 8000 },
       );
 
       // 404 is how Docker Hub says the username is free.
-      if (!user?.username) return { status: 'ok', checked: 0 };
+      if (!user?.username) return 0;
 
-      const searchedName = context.identity.name ? reveal(context.identity.name) : undefined;
-      const nameMatches =
-        Boolean(searchedName && user.full_name) &&
-        user.full_name!.trim().toLowerCase() === searchedName!.trim().toLowerCase();
-
-      const signals: SignalId[] = ['username_exact'];
-      if (nameMatches) signals.push('profile_corroborates_name');
+      const match = corroborate(context, { name: user.full_name, location: user.location });
 
       const dataTypes: DataType[] = ['username', 'social_profile'];
       if (user.full_name) dataTypes.push('name');
@@ -68,9 +61,9 @@ export const dockerHubSource: Source = {
       if (user.company) dataTypes.push('employer');
 
       const published = [
-        user.full_name ? 'your name' : null,
-        user.company ? 'your employer' : null,
-        user.location ? 'your location' : null,
+        user.full_name ? 'a name' : null,
+        user.company ? 'an employer' : null,
+        user.location ? 'a location' : null,
       ].filter((item): item is string => Boolean(item));
 
       const publishedList =
@@ -81,11 +74,9 @@ export const dockerHubSource: Source = {
       const joinedYear = user.date_joined ? Number(user.date_joined.slice(0, 4)) : undefined;
 
       emit.finding({
-        id: 'dockerhub:profile',
+        id: `dockerhub:profile:${handle.value}`,
         section: 'profiles',
-        title: primary.derived
-          ? `Docker Hub has an account called ${handle}`
-          : 'A Docker Hub account exists with your username',
+        title: handle.derived ? `Docker Hub — ${handle.value}` : 'Docker Hub account',
         provider: { id: 'dockerhub', label: 'Docker Hub', url: 'https://hub.docker.com' },
         origin: { name: 'Docker Hub', domain: 'hub.docker.com' },
         occurredAt:
@@ -94,20 +85,21 @@ export const dockerHubSource: Source = {
             : undefined,
         dataTypes,
         confidence: assessConfidence({
-          signals,
+          signals: ['username_exact', ...match.signals],
           nameOnly: false,
-          usernameOnly: !nameMatches,
-          derivedHandle: primary.derived,
-          handleSource: primary.source,
+          usernameOnly: match.usernameOnly,
+          derivedHandle: handle.derived,
+          handleSource: handle.source,
         }),
         evidence: {
-          url: `https://hub.docker.com/u/${encodeURIComponent(handle)}`,
+          url: `https://hub.docker.com/u/${encodeURIComponent(handle.value)}`,
           label: 'View the profile',
         },
         whyItMatters:
-          published.length > 0
+          (published.length > 0
             ? `Publishes ${publishedList}. Together that connects a technical handle to a real person at a real employer.`
-            : 'Public profile. Confirms the handle is in use and when it was created.',
+            : 'Public profile. Confirms the handle is in use and when it was created.') +
+          (match.note ? ` ${match.note}` : ''),
         actions: [
           {
             type: 'review_privacy_settings',
@@ -121,12 +113,9 @@ export const dockerHubSource: Source = {
         educationKey: 'public_profile',
       });
 
-      return { status: 'ok', checked: 1 };
-    } catch (error) {
-      if (error instanceof HttpError && (error.status === 429 || error.status === 403)) {
-        return { status: 'rate_limited', retryAfterSeconds: error.retryAfterSeconds };
-      }
-      return { status: 'failed', reason: describeError(error) };
-    }
+      return 1;
+    };
+
+    return sweepHandles(context, check);
   },
 };

@@ -28,6 +28,23 @@ function formatWhen(finding: Finding): string | null {
   return null;
 }
 
+/**
+ * The link as a person reads it: the host, and enough of the path to tell one
+ * profile from another. The full URL is on the anchor, so hovering still shows
+ * exactly where it goes.
+ */
+function readableUrl(raw: string): string {
+  try {
+    const url = new URL(raw);
+    const host = url.host.replace(/^www\./, '');
+    const path = decodeURIComponent(url.pathname).replace(/\/$/, '');
+    const tail = path.length > 28 ? `${path.slice(0, 27)}…` : path;
+    return host + tail;
+  } catch {
+    return raw;
+  }
+}
+
 function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-4 px-4 py-3">
@@ -52,6 +69,10 @@ export function FindingEntry({
   const when = formatWhen(finding);
   const includesCredentials = finding.dataTypes.includes('password_credential');
   const rejected = verdict === 'rejected';
+  const link = finding.evidence?.url;
+  // The title usually already names the service. Repeating it underneath is the
+  // kind of filler that makes a report feel padded.
+  const showsOrigin = !finding.title.includes(finding.origin.name);
 
   return (
     <motion.li
@@ -74,19 +95,18 @@ export function FindingEntry({
             {finding.title}
           </span>
           <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] text-faint">
-            <span>{finding.origin.name}</span>
-            {when ? (
-              <>
-                <span aria-hidden>·</span>
-                <span className="tabular">{when}</span>
-              </>
-            ) : null}
-            {finding.flags?.unverifiedBreach ? (
-              <>
-                <span aria-hidden>·</span>
-                <span>unconfirmed breach</span>
-              </>
-            ) : null}
+            {[
+              showsOrigin ? finding.origin.name : null,
+              when,
+              finding.flags?.unverifiedBreach ? 'unconfirmed breach' : null,
+            ]
+              .filter((part): part is string => Boolean(part))
+              .map((part, index) => (
+                <span key={part} className="flex items-center gap-x-2">
+                  {index > 0 ? <span aria-hidden>·</span> : null}
+                  <span className={part === when ? 'tabular' : undefined}>{part}</span>
+                </span>
+              ))}
           </span>
         </span>
 
@@ -111,6 +131,29 @@ export function FindingEntry({
           </motion.svg>
         </span>
       </motion.button>
+
+      {link ? (
+        <motion.a
+          layout={reduced ? false : 'position'}
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          whileTap={reduced ? undefined : { scale: 0.99 }}
+          className="flex items-center gap-2 border-t border-[rgb(var(--edge)/var(--edge-alpha))] px-4 py-2.5 text-[0.8125rem] font-medium text-accent-soft transition-colors hover:bg-[rgb(var(--glass)/0.07)] sm:px-5"
+        >
+          <span className="min-w-0 flex-1 truncate">{readableUrl(link)}</span>
+          <svg aria-hidden viewBox="0 0 12 12" fill="none" className="h-3 w-3 shrink-0">
+            <path
+              d="M3.5 8.5L8.5 3.5M8.5 3.5H4.5M8.5 3.5V7.5"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="sr-only">{finding.evidence?.label ?? 'Open in a new tab'}</span>
+        </motion.a>
+      ) : null}
 
       <AnimatePresence initial={false}>
         {open ? (
@@ -205,17 +248,6 @@ export function FindingEntry({
                     ))}
                   </ol>
                 </div>
-              ) : null}
-
-              {finding.evidence?.url ? (
-                <a
-                  href={finding.evidence.url}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  className="inline-block text-[0.875rem] font-medium text-accent-soft hover:underline"
-                >
-                  {finding.evidence.label ?? 'View the source'} →
-                </a>
               ) : null}
 
               <Explainer educationKey={finding.educationKey} />

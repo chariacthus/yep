@@ -1,11 +1,12 @@
 import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
-import type { SignalId } from '../confidence/signals';
 import type { DataType } from '../normalize/finding';
-import { describeError, HttpError, requestJson } from './http';
+import { corroborate } from './corroborate';
+import { requestJson } from './http';
 import { presentEmail } from './mask';
 import { closeAccountAction, legalErasureAction } from '../normalize/removal';
-import type { Emit, ScanContext, Source, SourceOutcome } from './types';
+import { sweepHandles } from './sweep-handles';
+import type { Emit, Handle, ScanContext, Source, SourceOutcome } from './types';
 
 /**
  * GitLab.
@@ -45,65 +46,53 @@ export const gitlabSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    const primary = context.handles[0];
-    if (!primary) return { status: 'skipped', reason: 'No username to search for' };
+    if (context.handles.length === 0) {
+      return { status: 'skipped', reason: 'No username to search for' };
+    }
 
-    const handle = primary.value;
     const entered = reveal(context.identity.emailNormalized);
 
-    try {
+    const check = async (handle: Handle): Promise<number> => {
       const users = await requestJson<GitLabUser[]>(
-        `${apiBase()}/users?username=${encodeURIComponent(handle)}`,
+        `${apiBase()}/users?username=${encodeURIComponent(handle.value)}`,
         { signal: context.signal, timeoutMs: 8000 },
       );
 
       // An empty array is how GitLab says the username is free.
       const user = Array.isArray(users) ? users[0] : undefined;
-      if (!user?.username) return { status: 'ok', checked: 0 };
+      if (!user?.username) return 0;
 
       const publishedEmail = user.public_email?.trim();
-      const emailMatches = Boolean(
-        publishedEmail && publishedEmail.toLowerCase() === entered,
-      );
+      const match = corroborate(context, { name: user.name, email: publishedEmail });
 
-      if (emailMatches) context.corroboration.confirmedHosts.add('gitlab.com');
-
-      const searchedName = context.identity.name ? reveal(context.identity.name) : undefined;
-      const nameMatches =
-        Boolean(searchedName && user.name) &&
-        user.name!.trim().toLowerCase() === searchedName!.trim().toLowerCase();
-
-      const signals: SignalId[] = ['username_exact'];
-      if (emailMatches) signals.push('profile_corroborates_email');
-      if (nameMatches) signals.push('profile_corroborates_name');
+      if (match.emailMatches) context.corroboration.confirmedHosts.add('gitlab.com');
 
       const dataTypes: DataType[] = ['username', 'social_profile'];
       if (user.name) dataTypes.push('name');
       if (publishedEmail) dataTypes.push('email');
 
       emit.finding({
-        id: 'gitlab:profile',
+        id: `gitlab:profile:${handle.value}`,
         section: 'profiles',
-        title: primary.derived
-          ? `GitLab has an account called ${handle}`
-          : 'A GitLab account exists with your username',
+        title: handle.derived ? `GitLab — ${handle.value}` : 'GitLab account',
         provider: { id: 'gitlab', label: 'GitLab', url: 'https://gitlab.com' },
         origin: { name: 'GitLab', domain: 'gitlab.com' },
         dataTypes,
         confidence: assessConfidence({
-          signals,
+          signals: ['username_exact', ...match.signals],
           nameOnly: false,
-          usernameOnly: !emailMatches && !nameMatches,
-          derivedHandle: primary.derived,
-          handleSource: primary.source,
+          usernameOnly: match.usernameOnly,
+          derivedHandle: handle.derived,
+          handleSource: handle.source,
         }),
         evidence: user.web_url ? { url: user.web_url, label: 'View the profile' } : undefined,
         whyItMatters: publishedEmail
           ? `Publishes ${presentEmail(publishedEmail, entered)} where anyone can read it. ` +
-            (emailMatches
+            (match.emailMatches
               ? 'That is the address you are scanning, so this account and it are publicly linked.'
               : 'Not the address you entered — a second account of yours, or someone else.')
-          : 'Public profile. Commit history can expose an email you did not mean to publish.',
+          : 'Public profile. Commit history can expose an email you did not mean to publish.' +
+            (match.note ? ` ${match.note}` : ''),
         actions: [
           {
             type: 'review_privacy_settings',
@@ -117,12 +106,9 @@ export const gitlabSource: Source = {
         educationKey: 'public_profile',
       });
 
-      return { status: 'ok', checked: 1 };
-    } catch (error) {
-      if (error instanceof HttpError && (error.status === 429 || error.status === 403)) {
-        return { status: 'rate_limited', retryAfterSeconds: error.retryAfterSeconds };
-      }
-      return { status: 'failed', reason: describeError(error) };
-    }
+      return 1;
+    };
+
+    return sweepHandles(context, check);
   },
 };

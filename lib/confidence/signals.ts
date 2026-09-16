@@ -29,6 +29,7 @@ export type SignalId =
   | 'username_exact'
   | 'profile_corroborates_name'
   | 'profile_corroborates_email'
+  | 'profile_corroborates_locality'
   | 'linked_account_verified'
   | 'name_exact'
   | 'name_plus_locality'
@@ -59,6 +60,7 @@ export const SIGNAL_WEIGHTS: Record<SignalId, number> = {
   username_exact: 20,
   profile_corroborates_name: 15,
   profile_corroborates_email: 25,
+  profile_corroborates_locality: 12,
   linked_account_verified: 30,
   name_exact: 8,
   name_plus_locality: 12,
@@ -75,6 +77,7 @@ const EXPLANATIONS: Record<SignalId, string> = {
   username_exact: 'Matched the username you entered — usernames are not unique',
   profile_corroborates_name: 'That page also shows your name',
   profile_corroborates_email: 'That page is linked to your email address',
+  profile_corroborates_locality: 'That page also gives the town you entered',
   linked_account_verified: 'Another profile of yours publicly links to this account',
   name_exact: 'Matched your name only',
   name_plus_locality: 'Matched your name together with your location',

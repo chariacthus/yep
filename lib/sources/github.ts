@@ -1,8 +1,9 @@
-import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
-import { describeError, HttpError, requestJson } from './http';
+import { corroborate } from './corroborate';
+import { requestJson } from './http';
+import { sweepHandles } from './sweep-handles';
 import { closeAccountAction, legalErasureAction } from '../normalize/removal';
-import type { Emit, ScanContext, Source, SourceOutcome } from './types';
+import type { Emit, Handle, ScanContext, Source, SourceOutcome } from './types';
 
 /**
  * GitHub.
@@ -12,6 +13,10 @@ import type { Emit, ScanContext, Source, SourceOutcome } from './types';
  * reverse-search commit metadata for the address — that technique is how people
  * de-anonymise developers, and building it into a self-assessment tool would
  * make it useful for the opposite purpose.
+ *
+ * Every handle is checked, not just the one that was typed. A name-derived
+ * handle that turns out to carry the right name and town is exactly the kind of
+ * account somebody has forgotten they own.
  */
 
 /**
@@ -46,74 +51,69 @@ export const githubSource: Source = {
   requiredEnv: [],
 
   async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-    const primary = context.handles[0];
-    if (!primary) return { status: 'skipped', reason: 'No username to search for' };
+    if (context.handles.length === 0) {
+      return { status: 'skipped', reason: 'No username to search for' };
+    }
 
     const token = process.env.GITHUB_TOKEN;
-    const handle = primary.value;
 
-    try {
-      const user = await requestJson<GitHubUser>(`${apiBase()}/users/${encodeURIComponent(handle)}`, {
-        headers: {
-          accept: 'application/vnd.github+json',
-          ...(token ? { authorization: `Bearer ${token}` } : {}),
+    const check = async (handle: Handle): Promise<number> => {
+      const user = await requestJson<GitHubUser>(
+        `${apiBase()}/users/${encodeURIComponent(handle.value)}`,
+        {
+          headers: {
+            accept: 'application/vnd.github+json',
+            ...(token ? { authorization: `Bearer ${token}` } : {}),
+          },
+          signal: context.signal,
+          timeoutMs: 8000,
         },
-        signal: context.signal,
-        timeoutMs: 8000,
+      );
+
+      if (!user?.login) return 0;
+
+      const match = corroborate(context, {
+        name: user.name,
+        location: user.location,
+        email: user.email,
       });
 
-      if (!user?.login) return { status: 'ok', checked: 0 };
+      if (match.emailMatches) context.corroboration.confirmedHosts.add('github.com');
 
-      const exposed: Array<'username' | 'name' | 'employer' | 'geolocation' | 'email' | 'social_profile'> = [
-        'username',
-        'social_profile',
-      ];
+      const exposed: Array<'username' | 'name' | 'employer' | 'geolocation' | 'email' | 'social_profile'> =
+        ['username', 'social_profile'];
       if (user.name) exposed.push('name');
       if (user.company) exposed.push('employer');
       if (user.location) exposed.push('geolocation');
       if (user.email) exposed.push('email');
 
-      // A name shown on the profile that matches the one searched for turns a
-      // bare username coincidence into real corroboration.
-      const searchedName = context.identity.name ? reveal(context.identity.name) : undefined;
-      const nameMatches =
-        Boolean(searchedName && user.name) &&
-        user.name!.trim().toLowerCase() === searchedName!.trim().toLowerCase();
-
-      // A public profile email that matches is the strongest signal available.
-      const emailMatches =
-        Boolean(user.email) &&
-        user.email!.trim().toLowerCase() === reveal(context.identity.emailNormalized);
-
-      if (emailMatches) context.corroboration.confirmedHosts.add('github.com');
-
-      const signals: Parameters<typeof assessConfidence>[0]['signals'] = ['username_exact'];
-      if (nameMatches) signals.push('profile_corroborates_name');
-      if (emailMatches) signals.push('profile_corroborates_email');
-
       emit.finding({
-        id: 'github:profile',
+        id: `github:profile:${handle.value}`,
         section: 'profiles',
-        title: primary.derived
-          ? `GitHub has an account called ${handle}`
-          : 'A GitHub account exists with your username',
+        title: handle.derived ? `GitHub — ${handle.value}` : 'GitHub account',
         provider: { id: 'github', label: 'GitHub', url: 'https://github.com' },
         origin: { name: 'GitHub', domain: 'github.com' },
         occurredAt: user.created_at
-          ? { date: user.created_at.slice(0, 10), year: Number(user.created_at.slice(0, 4)), precision: 'day' }
+          ? {
+              date: user.created_at.slice(0, 10),
+              year: Number(user.created_at.slice(0, 4)),
+              precision: 'day',
+            }
           : undefined,
         dataTypes: exposed,
         confidence: assessConfidence({
-          signals,
+          signals: ['username_exact', ...match.signals],
           nameOnly: false,
-          usernameOnly: !nameMatches && !emailMatches,
-          derivedHandle: primary.derived,
-          handleSource: primary.source,
+          usernameOnly: match.usernameOnly,
+          derivedHandle: handle.derived,
+          handleSource: handle.source,
         }),
-        evidence: user.html_url ? { url: user.html_url, label: 'View the profile' } : undefined,
+        evidence: user.html_url
+          ? { url: user.html_url, label: 'View the profile' }
+          : undefined,
         whyItMatters:
-          (emailMatches ? 'Publishes your email address directly. ' : '') +
-          'Location, employer and bio are public, and commit history can leak an address you did not mean to publish.',
+          'Location, employer and bio are public, and commit history can leak an address you did not mean to publish.' +
+          (match.note ? ` ${match.note}` : ''),
         actions: [
           {
             type: 'review_privacy_settings',
@@ -127,12 +127,9 @@ export const githubSource: Source = {
         educationKey: 'public_profile',
       });
 
-      return { status: 'ok', checked: 1 };
-    } catch (error) {
-      if (error instanceof HttpError && (error.status === 429 || error.status === 403)) {
-        return { status: 'rate_limited', retryAfterSeconds: error.retryAfterSeconds };
-      }
-      return { status: 'failed', reason: describeError(error) };
-    }
+      return 1;
+    };
+
+    return sweepHandles(context, check);
   },
 };

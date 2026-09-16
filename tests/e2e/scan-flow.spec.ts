@@ -81,6 +81,13 @@ test('a finding can be opened and dismissed as not you', async ({ page }) => {
   const firstEntry = page.locator('li button[aria-expanded]').first();
   if ((await firstEntry.count()) === 0) test.skip(true, 'No findings reachable from this network');
 
+  // Every finding carries a link to the thing it found, on the collapsed row.
+  // Checking whether a result is really yours means opening it, so the link
+  // cannot be buried behind a disclosure.
+  const link = page.locator('li:has(button[aria-expanded]) a[target="_blank"]').first();
+  await expect(link).toBeVisible();
+  await expect(link).toHaveAttribute('href', /^https?:\/\//);
+
   await firstEntry.click();
   // The reasoning behind a confidence level is always shown, never implied.
   await expect(page.getByText('Why we think this').first()).toBeVisible();

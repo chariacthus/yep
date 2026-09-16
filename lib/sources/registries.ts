@@ -1,9 +1,10 @@
 import { reveal } from '../identity';
 import { assessConfidence } from '../confidence/score';
 import type { Action, Finding } from '../normalize/finding';
-import { describeError, HttpError, requestJson } from './http';
+import { requestJson } from './http';
 import { presentEmail } from './mask';
-import type { Emit, ScanContext, Source, SourceOutcome } from './types';
+import { sweepHandles } from './sweep-handles';
+import type { Emit, Handle, ScanContext, Source, SourceOutcome } from './types';
 
 /**
  * Package registries, as a family.
@@ -229,15 +230,13 @@ function buildFinding(
   }
 
   return {
-    id: `registry:${spec.id}`,
+    id: `registry:${spec.id}:${handle}`,
     section: 'profiles',
-    title: derivedHandle
-      ? publishes
-        ? `${handle} publishes ${hit.packageCount} package${hit.packageCount === 1 ? '' : 's'} on ${spec.label}`
-        : `${spec.label} has an account called ${handle}`
-      : publishes
-        ? `You publish ${hit.packageCount} package${hit.packageCount === 1 ? '' : 's'} on ${spec.label}`
-        : `An account exists on ${spec.label} with your username`,
+    title: publishes
+      ? `${spec.label} — ${derivedHandle ? `${handle}, ` : ''}${hit.packageCount} package${hit.packageCount === 1 ? '' : 's'}`
+      : derivedHandle
+        ? `${spec.label} — ${handle}`
+        : `${spec.label} account`,
     provider: { id: spec.id, label: spec.label, url: spec.homepage },
     origin: { name: spec.label, domain: spec.domain },
     dataTypes,
@@ -267,43 +266,40 @@ function makeSource(spec: RegistrySpec): Source {
     requiredEnv: [],
 
     async run(context: ScanContext, emit: Emit): Promise<SourceOutcome> {
-      const primary = context.handles[0];
-      if (!primary) return { status: 'skipped', reason: 'No username to search for' };
+      if (context.handles.length === 0) {
+        return { status: 'skipped', reason: 'No username to search for' };
+      }
 
-      const handle = primary.value;
       const base = process.env[spec.envBase] ?? spec.defaultBase;
 
-      try {
-        const body = await requestJson<unknown>(spec.endpoint(handle, base), {
+      const check = async (handle: Handle): Promise<number> => {
+        const body = await requestJson<unknown>(spec.endpoint(handle.value, base), {
           signal: context.signal,
           timeoutMs: 8000,
         });
 
         // requestJson turns a 404 into null, which every one of these registries
         // uses to mean "no such handle".
-        if (body === null) return { status: 'ok', checked: 0 };
+        if (body === null) return 0;
 
         const hit = spec.interpret(body);
-        if (!hit) return { status: 'ok', checked: 0 };
+        if (!hit) return 0;
 
         emit.finding(
           buildFinding(
             spec,
             hit,
-            handle,
+            handle.value,
             reveal(context.identity.emailNormalized),
             context,
-            primary.derived,
-            primary.source,
+            handle.derived,
+            handle.source,
           ),
         );
-        return { status: 'ok', checked: 1 };
-      } catch (error) {
-        if (error instanceof HttpError && (error.status === 429 || error.status === 403)) {
-          return { status: 'rate_limited', retryAfterSeconds: error.retryAfterSeconds };
-        }
-        return { status: 'failed', reason: describeError(error) };
-      }
+        return 1;
+      };
+
+      return sweepHandles(context, check);
     },
   };
 }

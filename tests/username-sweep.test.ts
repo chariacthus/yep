@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { probeSite } from '@/lib/sources/usernames/prober';
+import { qualifyHandles } from '@/lib/sources/usernames';
+import type { Handle } from '@/lib/sources/types';
 import { applyStripBadChars, evaluate, prepareSites, type PreparedSite } from '@/lib/sources/usernames/wmn';
 
 /**
@@ -114,5 +116,28 @@ describe('the prepared site list', () => {
     for (const entry of prepareSites()) {
       expect(entry.uri_check.startsWith('https://')).toBe(true);
     }
+  });
+});
+
+describe('handle qualification', () => {
+  const given: Handle = { value: 'sindresorhus', derived: false, source: 'given' };
+  const fromEmail: Handle = { value: 'jsmith', derived: true, source: 'email' };
+  const fromName: Handle = { value: 'johnsmith', derived: true, source: 'name' };
+
+  it('always sweeps the handle the person typed, hit or not', () => {
+    expect(qualifyHandles([given], new Set())).toEqual([given]);
+  });
+
+  it('drops a guessed handle that exists nowhere mainstream', () => {
+    // 670 more requests on behalf of a string we invented, producing matches
+    // that are almost certainly other people. Not worth making.
+    expect(qualifyHandles([given, fromEmail, fromName], new Set(['johnsmith']))).toEqual([
+      given,
+      fromName,
+    ]);
+  });
+
+  it('keeps a guessed handle once something mainstream confirms it exists', () => {
+    expect(qualifyHandles([fromEmail], new Set(['jsmith']))).toEqual([fromEmail]);
   });
 });
