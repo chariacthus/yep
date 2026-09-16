@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * One restrained palette. Confidence is communicated through a small set of
+ * deliberate colours; everything else is neutral, because a report about
+ * somebody's exposed personal data should not look like a marketing dashboard.
+ */
+:root {
+  --canvas: 250 250 249;
+  --surface: 255 255 255;
+  --raised: 245 245 244;
+  --line: 231 229 228;
+  --ink: 28 25 23;
+  --muted: 87 83 78;
+  --faint: 120 113 108;
+  --accent: 15 76 129;
+  --accent-ink: 255 255 255;
+  --verified: 153 27 27;
+  --likely: 146 64 14;
+  --possible: 87 83 78;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --canvas: 12 12 11;
+    --surface: 24 24 22;
+    --raised: 35 34 32;
+    --line: 60 58 55;
+    --ink: 245 245 244;
+    --muted: 168 162 158;
+    --faint: 138 132 128;
+    --accent: 125 184 235;
+    --accent-ink: 12 12 11;
+    --verified: 248 150 150;
+    --likely: 240 186 120;
+    --possible: 168 162 158;
+  }
+}
+
+:root[data-theme='dark'] {
+  --canvas: 12 12 11;
+  --surface: 24 24 22;
+  --raised: 35 34 32;
+  --line: 60 58 55;
+  --ink: 245 245 244;
+  --muted: 168 162 158;
+  --faint: 138 132 128;
+  --accent: 125 184 235;
+  --accent-ink: 12 12 11;
+  --verified: 248 150 150;
+  --likely: 240 186 120;
+  --possible: 168 162 158;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--ink));
+  -webkit-font-smoothing: antialiased;
+}
+
+*:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@layer components {
+  .field {
+    @apply w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-ink
+      placeholder:text-faint focus:border-accent focus:outline-none;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5
+      text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-accent-ink hover:opacity-90;
+  }
+
+  .btn-quiet {
+    @apply btn border border-line bg-surface text-ink hover:bg-raised;
+  }
+
+  .card {
+    @apply rounded-xl border border-line bg-surface;
+  }
+}

@@ -1,0 +1,658 @@
+{
+ "_source": {
+  "registry": "UNAVAILABLE at build time — community data only",
+  "community": "github.com/brianreumere/data-brokers (BSD-2-Clause)",
+  "generatedBy": "scripts/build-brokers.ts"
+ },
+ "generatedAt": "2026-09-16T10:04:20.456Z",
+ "californiaRegistryIncluded": false,
+ "californiaRegisteredCount": 0,
+ "brokers": [
+  {
+   "id": "addresses-com",
+   "name": "addresses.com",
+   "aliases": [
+    "Addresses"
+   ],
+   "website": "https://www.addresses.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "advancedbackgroundchecks",
+   "name": "Advanced Background Checks",
+   "aliases": [
+    "AdvancedBackgroundChecks"
+   ],
+   "website": "https://www.advancedbackgroundchecks.com/",
+   "optOutUrl": "https://www.advancedbackgroundchecks.com/removal",
+   "process": "Search for your own listing, then request its removal.",
+   "helpUrl": "https://joindeleteme.com/blog/how-to-remove-yourself-from-advancedbackgroundchecks/",
+   "optOutWorking": true,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "advancedpeoplesearch",
+   "name": "Advanced People Search",
+   "aliases": [
+    "Advanced-People-Search.com"
+   ],
+   "website": "https://www.advanced-people-search.com/",
+   "optOutUrl": "https://www.advanced-people-search.com/static/view/contact/",
+   "process": "Search for your own listing, then request its removal.",
+   "helpUrl": "https://wiki.onerep.com/post/advanced-people-search.com",
+   "optOutWorking": true,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "americaphonebook",
+   "name": "America Phone Book",
+   "aliases": [
+    "AmericaPhoneBook.com"
+   ],
+   "website": "https://www.americaphonebook.com/",
+   "optOutUrl": "https://www.americaphonebook.com/contact.php",
+   "process": "Search for your own listing, then request its removal.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "anywho",
+   "name": "AnyWho",
+   "aliases": [],
+   "website": "https://www.anywho.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "backgroundcheckrun",
+   "name": "Background Check",
+   "aliases": [
+    "BackgroundCheck.Run"
+   ],
+   "website": "https://backgroundcheck.run/",
+   "process": "Submit a request through their privacy control page.",
+   "helpUrl": "https://joindeleteme.com/blog/how-to-remove-yourself-from-background-check-run/",
+   "optOutWorking": false,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "beenverified",
+   "name": "BeenVerified",
+   "aliases": [
+    "Been Verified"
+   ],
+   "website": "https://www.beenverified.com/",
+   "optOutUrl": "https://www.beenverified.com/app/optout/search",
+   "process": "Use their dedicated opt-out search page.",
+   "helpUrl": "https://joindeleteme.com/blog/how-to-remove-yourself-from-beenverified/",
+   "optOutWorking": false,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "clustrmaps",
+   "name": "ClustrMaps",
+   "aliases": [
+    "Clustr Maps"
+   ],
+   "website": "https://clustrmaps.com/",
+   "optOutUrl": "https://clustrmaps.com/bl/opt-out",
+   "process": "Search for your own listing, then request its removal.",
+   "helpUrl": "https://www.optery.com/councilon-how-to-remove-councilon-step-by-step-instructions/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "councilon",
+   "name": "Councilon",
+   "aliases": [],
+   "website": "https://councilon.com/",
+   "process": "Submit a request through their privacy control page.",
+   "helpUrl": "https://www.optery.com/councilon-how-to-remove-councilon-step-by-step-instructions/",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `control@councilon.com`. Make sure to indicate in the email that the opt-out form is broken.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "dataveria",
+   "name": "Dataveria",
+   "aliases": [],
+   "website": "https://dataveria.com/",
+   "process": "Submit a request through their privacy control page.",
+   "helpUrl": "https://wiki.onerep.com/post/dataveria.com",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `customer@dataveria.com`. Make sure to indicate in the email that the opt-out form is broken.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "dexknows",
+   "name": "DexKnows",
+   "aliases": [],
+   "website": "https://www.dexknows.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "easybackgroundchecks",
+   "name": "EasyBackgroundChecks",
+   "aliases": [
+    "EASYBACKGROUNDCHECKS"
+   ],
+   "website": "https://easybackgroundchecks.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "fastbackgroundcheck",
+   "name": "FastBackgroundCheck",
+   "aliases": [],
+   "website": "https://www.fastbackgroundcheck.com/",
+   "optOutUrl": "https://www.fastbackgroundcheck.com/opt-out",
+   "process": "Use their dedicated opt-out search page.",
+   "optOutWorking": true,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "freephonetracer",
+   "name": "FreePhoneTracer",
+   "aliases": [],
+   "website": "https://www.freephonetracer.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "greypages",
+   "name": "GreyPages",
+   "aliases": [],
+   "website": "https://www.grey-pages.com/",
+   "optOutUrl": "https://www.grey-pages.com/removal",
+   "process": "Search for your own listing, then request its removal.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "idtrue",
+   "name": "ID True",
+   "aliases": [
+    "IDtrue"
+   ],
+   "website": "https://idtrue.com/",
+   "optOutUrl": "https://idtrue.com/optout/index.php",
+   "process": "Use their dedicated opt-out search page.",
+   "optOutWorking": false,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "identitypi",
+   "name": "iDentityPi",
+   "aliases": [],
+   "website": "http://www.identitypi.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "infotracer",
+   "name": "InfoTracer",
+   "aliases": [
+    "Info Tracer",
+    "InfoPay"
+   ],
+   "website": "https://infotracer.com/",
+   "optOutUrl": "https://infotracer.com/optout/",
+   "process": "Use their dedicated opt-out search page.",
+   "helpUrl": "https://www.optery.com/infotracer-how-to-opt-out-of-infotracer-step-by-step-instructions/",
+   "optOutWorking": true,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "instantcheckmate",
+   "name": "Instant Checkmate",
+   "aliases": [],
+   "website": "https://www.instantcheckmate.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "intelius",
+   "name": "Intelius",
+   "aliases": [],
+   "website": "https://www.intelius.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "mylife",
+   "name": "MyLife",
+   "aliases": [
+    "MyLife.com"
+   ],
+   "website": "https://www.mylife.com/",
+   "optOutUrl": "https://www.mylife.com/ccpa/index.pubview",
+   "process": "Search for your own listing, then request its removal.",
+   "helpUrl": "https://www.optery.com/mylife-how-to-opt-out-and-remove-yourself-from-mylife-step-by-step-instructions/",
+   "optOutWorking": true,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "neighborreport",
+   "name": "Neighbor.Report",
+   "aliases": [
+    "Neighbor Report",
+    "NR"
+   ],
+   "website": "https://neighbor.report/",
+   "optOutUrl": "https://neighbor.report/remove",
+   "process": "Search for your own listing, then request its removal.",
+   "helpUrl": "https://joindeleteme.com/blog/how-to-remove-yourself-from-neighbor-report/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "neighborwho",
+   "name": "NeighborWho",
+   "aliases": [],
+   "website": "https://www.neighborwho.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "newenglandfacts",
+   "name": "New England Facts",
+   "aliases": [
+    "NewEnglandFacts"
+   ],
+   "website": "https://newenglandfacts.com/",
+   "process": "Submit a request through their privacy control page.",
+   "helpUrl": "https://joindeleteme.com/blog/how-to-remove-yourself-from-new-england-facts/",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `csr@newenglandfacts.com`. Make sure to indicate in the email that the opt-out form is broken.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "numberguru",
+   "name": "NumberGuru",
+   "aliases": [],
+   "website": "https://www.numberguru.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "nuwber",
+   "name": "Nuwber",
+   "aliases": [],
+   "website": "https://nuwber.com/",
+   "optOutUrl": "https://nuwber.com/removal/link",
+   "process": "Search for your own listing, then request its removal.",
+   "optOutWorking": true,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "officialusa",
+   "name": "OfficialUSA",
+   "aliases": [],
+   "website": "https://www.officialusa.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "peekyou",
+   "name": "PeekYou",
+   "aliases": [],
+   "website": "https://www.peekyou.com/",
+   "process": "Submit a request through their privacy control page.",
+   "helpUrl": "https://joindeleteme.com/blog/how-to-remove-yourself-from-peekyou/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "peoplebackgroundcheck",
+   "name": "People Background Check",
+   "aliases": [
+    "People-Background-Check",
+    "PeopleBackgroundCheck"
+   ],
+   "website": "https://people-background-check.com/",
+   "process": "Submit a request through their privacy control page.",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `unlist-request@people-background-check.com`. Make sure to indicate in the email that the opt-out form is broken.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "peoplesearchnow",
+   "name": "People Search Now",
+   "aliases": [
+    "PeopleSearchNow"
+   ],
+   "website": "https://www.peoplesearchnow.com/",
+   "optOutUrl": "https://www.peoplesearchnow.com/opt-out",
+   "process": "Use their dedicated opt-out search page.",
+   "helpUrl": "https://www.optery.com/peoplesearchnow-how-to-opt-out-of-peoplesearchnow-step-by-step-instructions/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "people-yellowpages-com",
+   "name": "people.yellowpages.com",
+   "aliases": [
+    "The Real Yellow Pages",
+    "The Real White Pages"
+   ],
+   "website": "https://people.yellowpages.com/whitepages/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "peoplebyname",
+   "name": "PeopleByName",
+   "aliases": [],
+   "website": "http://www.peoplebyname.com/",
+   "optOutUrl": "http://www.peoplebyname.com/remove.php",
+   "process": "Search for your own listing, then request its removal.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "peopleconnect",
+   "name": "PeopleConnect",
+   "aliases": [
+    "People Connect"
+   ],
+   "website": "https://peopleconnect.us/",
+   "optOutUrl": "https://suppression.peopleconnect.us/login",
+   "process": "Use their dedicated opt-out search page.",
+   "helpUrl": "https://www.optery.com/intelius-how-to-opt-out-and-remove-yourself-from-intelius-step-by-step-instructions/",
+   "optOutWorking": true,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "peoplefinders",
+   "name": "PeopleFinders",
+   "aliases": [],
+   "website": "https://www.peoplefinders.com/",
+   "optOutUrl": "https://www.peoplefinders.com/opt-out",
+   "process": "Search for your own listing, then request its removal.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "peoplelooker",
+   "name": "PeopleLooker",
+   "aliases": [],
+   "website": "https://www.peoplelooker.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "peoplesmart",
+   "name": "PeopleSmart",
+   "aliases": [],
+   "website": "https://www.peoplesmart.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "persontrust",
+   "name": "PersonTrust",
+   "aliases": [],
+   "website": "https://persontrust.com/",
+   "optOutUrl": "https://persontrust.com/ng/control/privacy",
+   "process": "Submit a request through their privacy control page.",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `removal@persontrust.com`. Make sure to indicate in the email that the opt-out form is broken.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "privateeye",
+   "name": "Private Eye",
+   "aliases": [],
+   "website": "https://www.privateeye.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "pub360",
+   "name": "Pub360",
+   "aliases": [],
+   "website": "https://pub360.com/",
+   "process": "Submit a request through their privacy control page.",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `removals@pub360.com`. Make sure to indicate in the email that the opt-out form is broken.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "publicinformationservices",
+   "name": "Public Information Services",
+   "aliases": [
+    "Public Info Services"
+   ],
+   "website": "https://www.publicinfoservices.com/",
+   "optOutUrl": "https://www.publicinfoservices.com/help-center/remove-me-from-website",
+   "process": "Use their dedicated opt-out search page.",
+   "helpUrl": "https://wiki.onerep.com/post/publicinfoservices.com",
+   "optOutWorking": true,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "publicrecords",
+   "name": "Public Records",
+   "aliases": [],
+   "website": "https://www.publicrecords.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "publicrecordsnow",
+   "name": "PublicRecordsNOW",
+   "aliases": [],
+   "website": "https://www.publicrecordsnow.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "radaris",
+   "name": "Radaris",
+   "aliases": [],
+   "website": "https://radaris.com/",
+   "process": "Submit a request through their privacy control page.",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `removals@radaris.com`. However, Radaris customer service claims, \"you will need to identify the specific personal information, and provide proof of identity along with evidence of your current state's residency status.\" Treat this on a case-by-case basis, and consider only following through with their absurd removal process if they are listing extremely sensitive info about you.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "revealname",
+   "name": "RevealName",
+   "aliases": [],
+   "website": "https://www.revealname.com/",
+   "optOutUrl": "https://www.revealname.com/opt_out",
+   "process": "Search for your own listing, then request its removal.",
+   "helpUrl": "https://wiki.onerep.com/post/revealname.com",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "searchpublicrecords",
+   "name": "Search Public Records",
+   "aliases": [],
+   "website": "https://www.searchpublicrecords.com/",
+   "optOutUrl": "https://www.searchpublicrecords.com/help-center/remove-me-from-website",
+   "process": "Use their dedicated opt-out search page.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "socialcatfish",
+   "name": "Social Catfish",
+   "aliases": [],
+   "website": "https://socialcatfish.com/",
+   "optOutUrl": "https://socialcatfish.com/opt-out/",
+   "process": "Search for your own listing, then request its removal.",
+   "helpUrl": "https://www.optery.com/socialcatfish-how-to-opt-out-of-socialcatfish-step-by-step-instructions/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "spokeo",
+   "name": "Spokeo",
+   "aliases": [],
+   "website": "https://www.spokeo.com/",
+   "optOutUrl": "https://www.spokeo.com/optout",
+   "process": "Search for your own listing, then request its removal.",
+   "helpUrl": "https://joindeleteme.com/blog/how-to-remove-yourself-from-spokeo/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "spydialer",
+   "name": "Spy Dialer",
+   "aliases": [],
+   "website": "https://spydialer.com/",
+   "optOutUrl": "https://spydialer.com/Consumers/",
+   "process": "Search for your own listing, then request its removal.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "thatsthem",
+   "name": "ThatsThem",
+   "aliases": [
+    "That'sThem"
+   ],
+   "website": "https://thatsthem.com/",
+   "optOutUrl": "https://thatsthem.com/optout",
+   "process": "Search for your own listing, then request its removal.",
+   "optOutWorking": true,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "truepeoplesearch",
+   "name": "TruePeopleSearch",
+   "aliases": [],
+   "website": "https://www.truepeoplesearch.com/",
+   "optOutUrl": "https://www.truepeoplesearch.com/removal",
+   "process": "Use their dedicated opt-out search page.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "truthfinder",
+   "name": "Truth Finder",
+   "aliases": [],
+   "website": "https://www.truthfinder.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "usapeoplesearch",
+   "name": "USA People Search",
+   "aliases": [],
+   "website": "https://www.usa-people-search.com/",
+   "optOutUrl": "https://www.usa-people-search.com/manage/",
+   "process": "Use their dedicated opt-out search page.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "usphonebook",
+   "name": "USPhoneBook",
+   "aliases": [
+    "US Phone Book"
+   ],
+   "website": "https://www.usphonebook.com/",
+   "optOutUrl": "https://www.usphonebook.com/opt-out",
+   "process": "Use their dedicated opt-out search page.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "ussearch",
+   "name": "USSearch",
+   "aliases": [],
+   "website": "https://www.ussearch.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "verecor",
+   "name": "Verecor",
+   "aliases": [],
+   "website": "https://verecor.com/",
+   "process": "Submit a request through their privacy control page.",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `assist@verecor.com`. Make sure to indicate in the email that the opt-out form is broken.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "vericora",
+   "name": "Vericora",
+   "aliases": [],
+   "website": "https://vericora.com/",
+   "process": "Submit a request through their privacy control page.",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `mailus@vericora.com`. Make sure to indicate in the email that the opt-out form is broken.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "veriforia",
+   "name": "Veriforia",
+   "aliases": [],
+   "website": "https://veriforia.com/",
+   "process": "Submit a request through their privacy control page.",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `support@veriforia.com`. Make sure to indicate in the email that the opt-out form is broken.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "veripages",
+   "name": "VeriPages",
+   "aliases": [],
+   "website": "https://veripages.com/",
+   "process": "Submit a request through their privacy control page.",
+   "optOutWorking": false,
+   "workaround": "The control form advises you to email `removal@veripages.com`. Make sure to indicate in the email that the opt-out form is broken.",
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "whitepages",
+   "name": "Whitepages",
+   "aliases": [],
+   "website": "https://www.whitepages.com/",
+   "optOutUrl": "https://www.whitepages.com/suppression-requests",
+   "process": "Search for your own listing, then request its removal.",
+   "helpUrl": "https://joindeleteme.com/help/kb/how-to-remove-yourself-from-whitepages-premium/",
+   "optOutWorking": true,
+   "registeredInCalifornia": false,
+   "collects": []
+  },
+  {
+   "id": "zabasearch",
+   "name": "Zabasearch",
+   "aliases": [],
+   "website": "https://www.zabasearch.com/",
+   "registeredInCalifornia": false,
+   "collects": []
+  }
+ ]
+}
