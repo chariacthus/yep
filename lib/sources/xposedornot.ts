@@ -109,7 +109,8 @@ export const xposedOrNotSource: Source = {
 
         // Sensitive breaches can out somebody, and ownership is only proved
         // when verification is switched on.
-        if (finding.flags?.sensitive && !context.emailVerified) continue;
+        if (finding.flags?.sensitive && !context.emailVerified && !context.includeSensitive)
+          continue;
 
         emit.finding(finding);
         emitted += 1;

@@ -97,11 +97,23 @@ export function ScanningScreen({
   const running = coverage.filter((entry) => entry.status === 'running');
   const sweep = progress.usernames;
 
-  // Sources and the site sweep are weighted together, so the ring does not sit
-  // at 90% for a minute while the sweep grinds through the long tail.
-  const sourceShare = coverage.length > 0 ? settled / coverage.length : 0;
-  const sweepShare = sweep && sweep.total > 0 ? sweep.done / sweep.total : null;
-  const overall = sweepShare === null ? sourceShare : sourceShare * 0.4 + sweepShare * 0.6;
+  /**
+   * Every source counts as one unit of work, and a source still running counts
+   * for the fraction of itself it has reported.
+   *
+   * The earlier version treated a running source as zero, which meant the ring
+   * stuck at 98% for the whole back half of a scan: the site sweep would be
+   * reporting 702 of 702 while still counting as unfinished, and it only
+   * settled at the moment the report replaced the screen. So the ring never
+   * actually reached 100% — it just vanished.
+   */
+  const inFlight = running.reduce((total, entry) => {
+    const live = progress[entry.id];
+    if (!live || live.total <= 0) return total;
+    return total + Math.min(1, live.done / live.total);
+  }, 0);
+
+  const overall = coverage.length > 0 ? (settled + inFlight) / coverage.length : 0;
 
   const active = running[0];
 

@@ -195,6 +195,18 @@ export default function SourcesPage() {
             (BSD-2-Clause), and the California Privacy Protection Agency&apos;s public registry.
           </li>
           <li>
+            Web search via{' '}
+            <a
+              className="text-accent hover:underline"
+              href="https://searxng.org"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              SearXNG
+            </a>
+            , open-source metasearch that needs no API key.
+          </li>
+          <li>
             Name frequency data from the US Census Bureau (public domain) and FiveThirtyEight
             (CC BY 4.0).
           </li>

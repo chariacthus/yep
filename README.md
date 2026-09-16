@@ -28,11 +28,17 @@ npm run dev
 Then open <http://localhost:3000>. That is the whole setup — no `.env` file, no
 account, no email service, no API keys, no cost.
 
-**You do not need a username.** Handles are derived from the local part of your
-address (`john.smith@…` → `john.smith`, `johnsmith`) and swept across all ~700
-sites, so an email-only scan still finds social and developer accounts. Anything
-found that way is labelled as a guess and capped at *possible*, because nobody
-confirmed the handle is yours.
+**You do not need a username.** Handles are worked out from your address
+(`john.smith@…` → `john.smith`, `johnsmith`) and from your name (`John Smith` →
+`johnsmith`, `john.smith`, `jsmith`), then every one of them is swept across all
+~700 sites. So an email-only scan still finds social, gaming and developer
+accounts.
+
+Anything found that way is titled as what it is — *"GitLab has an account called
+johnsmith"*, never *"your username"* — carries a signal saying we guessed it, and
+is capped at *possible*. The **town or city** field is worth filling in: a name
+on its own is the weakest evidence here, and a name beside a place is far more
+specific.
 
 Seventeen of the nineteen sources run with no configuration at all. The two that
 need a paid key are simply left out of the scan rather than reported as gaps —
@@ -100,11 +106,17 @@ useful with nothing configured.
 | Bitbucket | no | no |
 | Docker Hub | no | no |
 | npm · RubyGems · Packagist · Hex.pm | no | no |
+| Web search (SearXNG) | no | yes — the query is your address |
 | Internet Archive | no | no |
 | Username sweep (~700 sites) | no | no |
 | Data broker directory | no | no — local lookup |
 | Have I Been Pwned *account lookup* | yes | no, with Pro k-anonymity |
 | Brave Search | yes | no |
+
+Web search runs against [SearXNG](https://searxng.org), which is open source and
+needs no key. Set `SEARXNG_URL` to your own instance for reliable results; left
+unset it tries a few public ones, which is best-effort and says so when none
+answer.
 
 ### Breach detail comes free
 

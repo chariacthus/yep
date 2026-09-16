@@ -149,6 +149,7 @@ function buildFinding(
   enteredEmail: string,
   context: ScanContext,
   derivedHandle: boolean,
+  handleSource: 'given' | 'email' | 'name',
 ): Finding {
   const emailMatches = Boolean(
     hit.publishedEmail && hit.publishedEmail.trim().toLowerCase() === enteredEmail,
@@ -245,6 +246,7 @@ function buildFinding(
       nameOnly: false,
       usernameOnly: !emailMatches,
       derivedHandle,
+      handleSource,
     }),
     evidence: { url: spec.profileUrl(handle), label: `View the ${spec.label} profile` },
     whyItMatters: details.join(' '),
@@ -292,6 +294,7 @@ function makeSource(spec: RegistrySpec): Source {
             reveal(context.identity.emailNormalized),
             context,
             primary.derived,
+            primary.source,
           ),
         );
         return { status: 'ok', checked: 1 };

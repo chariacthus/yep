@@ -101,7 +101,8 @@ export const leakCheckSource: Source = {
           provider,
         );
         if (!finding) continue;
-        if (finding.flags?.sensitive && !context.emailVerified) continue;
+        if (finding.flags?.sensitive && !context.emailVerified && !context.includeSensitive)
+          continue;
 
         emit.finding(finding);
         emitted += 1;

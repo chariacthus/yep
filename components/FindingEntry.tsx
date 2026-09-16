@@ -92,14 +92,23 @@ export function FindingEntry({
 
         <span className="flex shrink-0 items-center gap-2.5">
           <ConfidenceBadge confidence={finding.confidence} />
-          <motion.span
+          {/* iOS uses a chevron that turns, not a plus that becomes a cross. */}
+          <motion.svg
             aria-hidden
-            animate={{ rotate: open ? 45 : 0 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-            className="text-lg leading-none text-faint"
+            viewBox="0 0 7 12"
+            fill="none"
+            className="chevron"
+            animate={{ rotate: open ? 90 : 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           >
-            +
-          </motion.span>
+            <path
+              d="M1 1l5 5-5 5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </motion.svg>
         </span>
       </motion.button>
 
@@ -114,7 +123,7 @@ export function FindingEntry({
             className="overflow-hidden"
           >
             <div className="space-y-6 px-4 pb-5 sm:px-5">
-              <dl className="well divide-hair">
+              <dl className="well list-inset overflow-hidden">
                 <MetaRow label="Where">
                   {finding.origin.name}
                   {finding.origin.domain ? (

@@ -28,8 +28,9 @@ const CREDENTIAL_MARKERS = [
 function contextFor(_server: Server): ScanContext {
   return {
     identity: buildIdentity({ email: 'subject@example.test', username: 'subject' }),
-    handles: [{ value: 'subject', derived: false }],
+    handles: [{ value: 'subject', derived: false, source: 'given' }],
     emailVerified: true,
+    includeSensitive: false,
     declinedSources: new Set(),
     corroboration: { confirmedHosts: new Set() },
     deadline: Date.now() + 10_000,

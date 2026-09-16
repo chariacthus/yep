@@ -63,6 +63,7 @@ export function ScanFlow() {
   const [username, setUsername] = useState('');
   const [locality, setLocality] = useState('');
   const [affirmed, setAffirmed] = useState(false);
+  const [includeSensitive, setIncludeSensitive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -155,6 +156,7 @@ export function ScanFlow() {
           username: username || undefined,
           locality: locality || undefined,
           declinedSources: [...declined],
+          includeSensitive,
         }),
         signal: controller.signal,
       });
@@ -278,7 +280,16 @@ export function ScanFlow() {
     } finally {
       setBusy(false);
     }
-  }, [email, name, username, locality, declined, pushTrace, scheduleProgressFlush]);
+  }, [
+    email,
+    name,
+    username,
+    locality,
+    declined,
+    includeSensitive,
+    pushTrace,
+    scheduleProgressFlush,
+  ]);
 
   /** Re-scores a finding when the person answers "is this you?". */
   const applyVerdict = useCallback((finding: Finding, verdict: Verdict) => {
@@ -460,6 +471,19 @@ export function ScanFlow() {
               between the tool and casual use on other people. It is not much,
               but it is explicit, and it is what the terms rest on.
             */}
+            <label className="glass flex cursor-pointer items-start gap-3 p-4 sm:p-5">
+              <input
+                type="checkbox"
+                checked={includeSensitive}
+                onChange={(changeEvent) => setIncludeSensitive(changeEvent.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[rgb(var(--accent))]"
+              />
+              <span className="text-[0.9375rem] leading-relaxed text-muted">
+                Include adult, dating, political and health sites.{' '}
+                <span className="text-faint">Hidden by default — being listed is revealing.</span>
+              </span>
+            </label>
+
             <label className="glass flex cursor-pointer items-start gap-3 p-4 sm:p-5">
               <input
                 type="checkbox"

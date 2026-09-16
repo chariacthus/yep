@@ -98,6 +98,7 @@ export const dockerHubSource: Source = {
           nameOnly: false,
           usernameOnly: !nameMatches,
           derivedHandle: primary.derived,
+          handleSource: primary.source,
         }),
         evidence: {
           url: `https://hub.docker.com/u/${encodeURIComponent(handle)}`,

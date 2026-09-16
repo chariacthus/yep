@@ -15,6 +15,7 @@ import { waybackSource } from './wayback';
 import { usernameSource } from './usernames';
 import { brokerSource } from './brokers';
 import { braveSearchSource } from './search/brave';
+import { searxngSource } from './search/searxng';
 import type { Source } from './types';
 
 /**
@@ -38,6 +39,7 @@ export const SOURCES: readonly Source[] = [
   npmSource,
   ...registrySources,
   waybackSource,
+  searxngSource,
   braveSearchSource,
   usernameSource,
   brokerSource,
@@ -63,21 +65,33 @@ export const PRIMING_SOURCE_IDS: readonly string[] = ['gravatar', 'gitlab'];
  *
  * Known at build time, so this needs no coordination between concurrent sources.
  */
-export const HOSTS_WITH_DEDICATED_SOURCES: ReadonlySet<string> = new Set([
+const DEDICATED_DOMAINS: readonly string[] = [
   'github.com',
   'gitlab.com',
   'bitbucket.org',
-  'hub.docker.com',
   'docker.com',
   'npmjs.com',
-  'www.npmjs.com',
   'gravatar.com',
-  'en.gravatar.com',
-  'keys.openpgp.org',
+  'openpgp.org',
   'rubygems.org',
   'packagist.org',
   'hex.pm',
-]);
+];
+
+/**
+ * True when a dedicated source already covers this host.
+ *
+ * Matched by suffix rather than equality, because the dataset reaches the same
+ * services through different hostnames — its GitHub entries call
+ * `api.github.com`, not `github.com`, so an exact-match check let every GitHub
+ * account be reported twice.
+ */
+export function hasDedicatedSource(host: string): boolean {
+  const normalised = host.toLowerCase().replace(/^www\./, '');
+  return DEDICATED_DOMAINS.some(
+    (domain) => normalised === domain || normalised.endsWith(`.${domain}`),
+  );
+}
 
 export function sourceById(id: string): Source | undefined {
   return SOURCES.find((source) => source.id === id);

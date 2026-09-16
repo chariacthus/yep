@@ -65,7 +65,38 @@ function localPart(email: string): string {
 export interface DerivedUsername {
   value: string;
   /** Shown in the report so a derived handle is never mistaken for a given one. */
-  derivedFrom: 'email';
+  derivedFrom: 'email' | 'name';
+}
+
+/**
+ * Handle candidates from a person's name.
+ *
+ * "John Smith" is `johnsmith`, `john.smith` and `jsmith` on a great many sites,
+ * and somebody who gives their name but no handle should still get the sweep.
+ * These are weaker than email-derived handles — a name is shared, an address is
+ * not — so they are marked derived and capped in the same way, and anything
+ * found is only worth showing when the site's own profile name matches too.
+ */
+export function deriveFromName(rawName: string): DerivedUsername[] {
+  const parts = rawName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z\s'-]/g, '')
+    .split(/[\s'-]+/)
+    .filter((part) => part.length > 0);
+
+  if (parts.length < 2) return [];
+
+  const first = parts[0]!;
+  const last = parts[parts.length - 1]!;
+  if (first.length < 2 || last.length < 2) return [];
+
+  const candidates = [`${first}${last}`, `${first}.${last}`, `${first[0]}${last}`];
+
+  return candidates
+    .filter((value) => value.length >= MIN_LENGTH && !GENERIC.has(value))
+    .slice(0, 3)
+    .map((value) => ({ value, derivedFrom: 'name' as const }));
 }
 
 export function deriveUsernames(rawEmail: string): DerivedUsername[] {

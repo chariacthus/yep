@@ -3,7 +3,7 @@ import type { Finding } from '../../normalize/finding';
 import type { SignalId } from '../../confidence/signals';
 import { closeAccountAction, legalErasureAction } from '../../normalize/removal';
 import type { Emit, ScanContext, Source, SourceOutcome } from '../types';
-import { HOSTS_WITH_DEDICATED_SOURCES } from '../registry';
+import { hasDedicatedSource } from '../registry';
 import { probeAll } from './prober';
 import { prepareSites } from './wmn';
 
@@ -29,7 +29,7 @@ import { prepareSites } from './wmn';
  * Gravatar-verified link to the same host, say — corroborates it.
  */
 
-const DEFAULT_CONCURRENCY = 32;
+const DEFAULT_CONCURRENCY = 48;
 // Sites that have not answered in four seconds are almost always blocking us
 // rather than being slow; waiting longer just spends the budget.
 const PROBE_TIMEOUT_MS = 4000;
@@ -37,7 +37,7 @@ const PROBE_TIMEOUT_MS = 4000;
 function concurrency(): number {
   const configured = Number(process.env.SCAN_USERNAME_CONCURRENCY);
   if (!Number.isFinite(configured) || configured < 1) return DEFAULT_CONCURRENCY;
-  return Math.min(64, Math.floor(configured));
+  return Math.min(96, Math.floor(configured));
 }
 
 export const usernameSource: Source = {
@@ -59,9 +59,7 @@ export const usernameSource: Source = {
     // A dedicated adapter reports these hosts in far more detail, so letting the
     // sweep report them as well would duplicate every one of them with a worse
     // version of the same finding.
-    const sites = prepareSites().filter(
-      (site) => !HOSTS_WITH_DEDICATED_SOURCES.has(site.host.replace(/^www\./, '')),
-    );
+    const sites = prepareSites().filter((site) => !hasDedicatedSource(site.host));
 
     // Every handle gets the full sweep. Searching only the first would mean an
     // email-only scan checked `john.smith` and never `johnsmith`.
@@ -105,7 +103,7 @@ export const usernameSource: Source = {
       // Sensitive categories can out somebody. Nobody should be able to type a
       // stranger's username and learn which dating or adult sites they use, so
       // these are withheld entirely unless ownership has actually been proved.
-      if (site.sensitive && !context.emailVerified) {
+      if (site.sensitive && !context.emailVerified && !context.includeSensitive) {
         withheld += 1;
         continue;
       }
@@ -133,12 +131,15 @@ export const usernameSource: Source = {
           usernameOnly: !corroborated,
           // A handle taken from an address is a lead, not an identifier.
           derivedHandle: currentHandle.derived,
+          handleSource: currentHandle.source,
         }),
         evidence: result.profileUrl ? { url: result.profileUrl, label: 'Open the profile' } : undefined,
         whyItMatters: currentHandle.derived
-          ? `This handle comes from your email address, not from you — we have not confirmed it is yours. Worth a look if you recognise it.`
+          ? currentHandle.source === 'name'
+            ? `We built "${currentHandle.value}" from your name. Worth a look if you recognise it.`
+            : `We took "${currentHandle.value}" from your email address. Worth a look if you recognise it.`
           : corroborated
-            ? 'You have publicly linked this site to your email address elsewhere, so this one is almost certainly yours.'
+            ? 'You have publicly linked this site to your address elsewhere, so this is almost certainly yours.'
             : 'Usernames are not unique, so this may be someone else.',
         actions: [
           {

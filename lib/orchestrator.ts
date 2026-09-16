@@ -1,6 +1,6 @@
 import { AsyncQueue } from './async-queue';
 import { randomId } from './crypto';
-import { deriveUsernames } from './identity-derive';
+import { deriveFromName, deriveUsernames } from './identity-derive';
 import { logger } from './logger';
 import { reveal, type Identity } from './identity';
 import type { Finding, RemovalOpportunity } from './normalize/finding';
@@ -103,11 +103,15 @@ function mergeFindings(existing: Finding, incoming: Finding): Finding {
 export interface ScanOptions {
   identity: Identity;
   emailVerified: boolean;
+  /** Include adult, dating, political and health results. */
+  includeSensitive?: boolean;
   declinedSources: ReadonlySet<string>;
   budgetMs: number;
 }
 
-const DEFAULT_BUDGET_MS = 120_000;
+// Enough for the full sweep to finish on a normal connection rather than be
+// cut off near the end. Stay under the platform's function timeout.
+const DEFAULT_BUDGET_MS = 180_000;
 
 export function scanBudgetMs(): number {
   const configured = Number(process.env.SCAN_BUDGET_MS);
@@ -196,13 +200,38 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
   const deadline = started + options.budgetMs;
   const controller = new AbortController();
 
-  // The handle they typed, then any derived from their address. An email-only
-  // scan would otherwise skip every username source, which is most of them.
-  const given = options.identity.username ? reveal(options.identity.username).trim() : '';
-  const handles: Handle[] = given ? [{ value: given, derived: false }] : [];
+  /**
+   * Everything worth searching for: the handle they typed, handles from the
+   * local part of their address, and handles built from their name.
+   *
+   * Without this an email-only scan skips every username source, which is most
+   * of them — and somebody who gives a name but no handle gets nothing from the
+   * seven-hundred-site sweep despite having told us who they are.
+   */
+  const handles: Handle[] = [];
+
+  /**
+   * Each handle costs a full pass over ~700 sites, so the list is capped. Four
+   * is the point where the marginal candidate — the third spelling of a name —
+   * stops being worth another seven hundred requests to other people's servers.
+   */
+  const MAX_HANDLES = 4;
+
+  const addHandle = (value: string, source: Handle['source']) => {
+    if (handles.length >= MAX_HANDLES) return;
+    const cleaned = value.trim();
+    if (!cleaned) return;
+    if (handles.some((handle) => handle.value.toLowerCase() === cleaned.toLowerCase())) return;
+    handles.push({ value: cleaned, derived: source !== 'given', source });
+  };
+
+  if (options.identity.username) addHandle(reveal(options.identity.username), 'given');
   for (const candidate of deriveUsernames(reveal(options.identity.emailNormalized))) {
-    if (!handles.some((handle) => handle.value.toLowerCase() === candidate.value)) {
-      handles.push({ value: candidate.value, derived: true });
+    addHandle(candidate.value, 'email');
+  }
+  if (options.identity.name) {
+    for (const candidate of deriveFromName(reveal(options.identity.name))) {
+      addHandle(candidate.value, 'name');
     }
   }
 
@@ -250,6 +279,7 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
       identity: options.identity,
       handles,
       emailVerified: options.emailVerified,
+      includeSensitive: options.includeSensitive === true,
       declinedSources: options.declinedSources,
       corroboration,
       deadline,

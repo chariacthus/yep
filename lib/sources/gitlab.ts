@@ -95,6 +95,7 @@ export const gitlabSource: Source = {
           nameOnly: false,
           usernameOnly: !emailMatches && !nameMatches,
           derivedHandle: primary.derived,
+          handleSource: primary.source,
         }),
         evidence: user.web_url ? { url: user.web_url, label: 'View the profile' } : undefined,
         whyItMatters: publishedEmail

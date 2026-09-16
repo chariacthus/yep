@@ -70,6 +70,7 @@ export const bitbucketSource: Source = {
           nameOnly: false,
           usernameOnly: !nameMatches,
           derivedHandle: primary.derived,
+          handleSource: primary.source,
         }),
         evidence: {
           url: `https://bitbucket.org/${encodeURIComponent(handle)}/`,

@@ -49,9 +49,10 @@
   --warn: 255 159 10;
   --alarm: 255 69 58;
 
-  --radius: 22px;
-  --radius-sm: 14px;
-  --radius-lg: 30px;
+  /* iOS continuous-corner radii. */
+  --radius: 20px;
+  --radius-sm: 12px;
+  --radius-lg: 28px;
 
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
     var(--font-inter), system-ui, sans-serif;
@@ -101,8 +102,17 @@ body {
   background: rgb(var(--bg));
   color: rgb(var(--ink));
   font-family: var(--font-sans);
+  font-size: 17px; /* iOS body size */
+  line-height: 1.29;
   -webkit-font-smoothing: antialiased;
-  letter-spacing: -0.011em;
+  /* SF tightens as it grows; Inter needs this applied by hand. */
+  letter-spacing: -0.022em;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.032em;
 }
 
 /**
@@ -218,8 +228,39 @@ time {
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.06) inset;
   }
 
+  /* iOS footnote: 13/18, medium. */
   .label {
-    @apply text-[0.8125rem] font-medium text-muted;
+    @apply text-[0.8125rem] font-medium leading-[1.38] text-muted;
+  }
+
+  /**
+   * A grouped list, the way iOS Settings draws one: rows sharing a single
+   * rounded container, separated by hairlines that stop short of the left edge
+   * rather than running the full width.
+   */
+  .list-group > * + * {
+    border-top: 1px solid rgb(var(--edge) / var(--edge-alpha));
+  }
+
+  .list-inset > * + * {
+    position: relative;
+  }
+
+  .list-inset > * + *::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: rgb(var(--edge) / var(--edge-alpha));
+  }
+
+  /* The disclosure chevron iOS uses on every navigable row. */
+  .chevron {
+    @apply shrink-0 text-faint;
+    width: 7px;
+    height: 12px;
   }
 
   .mono-xs {
@@ -228,8 +269,8 @@ time {
   }
 
   .field {
-    @apply w-full bg-transparent px-4 py-3.5 text-[1.0625rem] text-ink
-      placeholder:text-faint/70 focus:outline-none;
+    @apply w-full min-h-[2.75rem] bg-transparent px-4 py-3 text-[1.0625rem] text-ink
+      placeholder:text-faint/60 focus:outline-none;
     border: 1px solid rgb(var(--edge) / var(--edge-alpha));
     border-radius: var(--radius-sm);
     background: rgb(var(--inset) / var(--inset-fill));
@@ -243,10 +284,13 @@ time {
     background: rgb(var(--inset) / var(--inset-fill-strong));
   }
 
+  /* 44px minimum, which is the iOS touch target. */
   .btn {
-    @apply inline-flex select-none items-center justify-center gap-2 text-[0.9375rem]
-      font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex min-h-[2.75rem] select-none items-center justify-center gap-2
+      text-[1.0625rem] font-semibold transition-colors
+      disabled:cursor-not-allowed disabled:opacity-40;
     border-radius: 999px;
+    letter-spacing: -0.022em;
   }
 
   .btn-primary {
@@ -284,7 +328,7 @@ time {
   }
 
   .btn-quiet {
-    @apply btn px-4 py-2 text-[0.875rem] text-ink;
+    @apply btn px-4 py-2 text-[0.9375rem] text-ink;
     background: rgb(var(--glass) / 0.1);
     border: 1px solid rgb(var(--edge) / var(--edge-alpha));
   }
@@ -294,10 +338,12 @@ time {
   }
 
   /* A capsule, as used for statuses and counts. */
+  /* iOS caption weight and size, in a capsule. */
   .pill {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-[0.75rem] font-medium;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-[0.1875rem] text-[0.75rem] font-medium;
     border-radius: 999px;
     background: rgb(var(--glass) / 0.1);
+    letter-spacing: 0;
   }
 
   .divide-hair > * + * {

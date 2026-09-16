@@ -26,14 +26,22 @@ export function Explainer({ educationKey }: { educationKey: string }) {
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
       >
         <span className="text-[0.9375rem] text-ink">{explainer.question}</span>
-        <motion.span
+        <motion.svg
           aria-hidden
-          animate={{ rotate: open ? 45 : 0 }}
-          transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-          className="shrink-0 text-lg leading-none text-accent-soft"
+          viewBox="0 0 7 12"
+          fill="none"
+          className="chevron text-accent-soft"
+          animate={{ rotate: open ? 90 : 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         >
-          +
-        </motion.span>
+          <path
+            d="M1 1l5 5-5 5"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </motion.svg>
       </button>
 
       <AnimatePresence initial={false}>

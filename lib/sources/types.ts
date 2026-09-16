@@ -59,8 +59,10 @@ export interface Corroboration {
 /** A handle to search for, and where it came from. */
 export interface Handle {
   value: string;
-  /** Derived handles came from the email address, not from the person. */
+  /** Derived handles were worked out by us, not given by the person. */
   derived: boolean;
+  /** What it was worked out from, for the explanation shown on a finding. */
+  source: 'given' | 'email' | 'name';
 }
 
 export interface ScanContext {
@@ -75,6 +77,13 @@ export interface ScanContext {
   corroboration: Corroboration;
   /** True once the person has proved they control the address. */
   emailVerified: boolean;
+  /**
+   * The person asked for adult, dating, political and health results to be
+   * included. Off by default: being listed on those is revealing in itself, and
+   * without verification we cannot tell who is running the scan. Someone
+   * checking their own exposure can switch it on.
+   */
+  includeSensitive: boolean;
   /** Source ids the person declined in the consent step. */
   declinedSources: ReadonlySet<string>;
   /** Wall-clock deadline for the whole scan. */

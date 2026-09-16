@@ -27,10 +27,12 @@ export interface ScoreInput {
   /** True when the only identifier is a username. */
   usernameOnly?: boolean;
   /**
-   * The handle was derived from the email address rather than given. That makes
-   * it a lead worth showing, never a claim about the person.
+   * The handle was worked out by us rather than given. That makes it a lead
+   * worth showing, never a claim about the person.
    */
   derivedHandle?: boolean;
+  /** What the handle was worked out from, for the explanation. */
+  handleSource?: 'given' | 'email' | 'name';
   /** Set by the person's own answer to "Is this you?". */
   userVerdict?: 'confirmed' | 'rejected';
 }
@@ -56,9 +58,10 @@ export function assessConfidence(input: ScoreInput): ConfidenceAssessment {
     // "Matched the username you entered" is simply untrue when we guessed the
     // handle, so the explanation is corrected rather than contradicted by the
     // line that follows it.
+    const from = input.handleSource === 'name' ? 'your name' : 'your email address';
     for (const item of signals) {
       if (item.id === 'username_exact') {
-        item.explanation = 'Matched a handle taken from your email address';
+        item.explanation = `Matched a handle we built from ${from}`;
       }
     }
     signals.push(signal('derived_handle'));
@@ -106,7 +109,10 @@ export function assessConfidence(input: ScoreInput): ConfidenceAssessment {
   // up. Nobody told us it was theirs.
   if (input.derivedHandle) {
     level = 'possible';
-    cappedBy = 'This handle came from your email address — nobody confirmed it is yours.';
+    cappedBy =
+      input.handleSource === 'name'
+        ? 'We built this handle from your name — nobody confirmed it is yours.'
+        : 'We took this handle from your email address — nobody confirmed it is yours.';
   }
 
   // Cap 3: only an exact match on an identifier that was actually entered can be

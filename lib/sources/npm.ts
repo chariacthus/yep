@@ -74,6 +74,7 @@ export const npmSource: Source = {
           nameOnly: false,
           usernameOnly: true,
           derivedHandle: primary.derived,
+          handleSource: primary.source,
         }),
         evidence: {
           url: `https://www.npmjs.com/~${encodeURIComponent(handle)}`,

@@ -108,6 +108,7 @@ export const githubSource: Source = {
           nameOnly: false,
           usernameOnly: !nameMatches && !emailMatches,
           derivedHandle: primary.derived,
+          handleSource: primary.source,
         }),
         evidence: user.html_url ? { url: user.html_url, label: 'View the profile' } : undefined,
         whyItMatters:

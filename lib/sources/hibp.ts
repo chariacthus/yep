@@ -113,7 +113,7 @@ export const hibpSource: Source = {
         // Sensitive breaches can out somebody — a leak from an affair site or a
         // political forum is revealing merely by association. They are surfaced
         // only to a person who has proved they own the address.
-        if (finding.flags?.sensitive && !context.emailVerified) {
+        if (finding.flags?.sensitive && !context.emailVerified && !context.includeSensitive) {
           withheld += 1;
           continue;
         }

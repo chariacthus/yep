@@ -29,6 +29,7 @@ const schema = z.object({
   username: z.string().max(80).optional(),
   locality: z.string().max(120).optional(),
   declinedSources: z.array(z.string().max(40)).max(40).optional(),
+  includeSensitive: z.boolean().optional(),
 });
 
 function encode(event: ScanEvent): Uint8Array {
@@ -97,6 +98,7 @@ export async function POST(request: Request): Promise<Response> {
         for await (const event of runScan({
           identity,
           emailVerified,
+          includeSensitive: parsed.data.includeSensitive === true,
           declinedSources,
           budgetMs: scanBudgetMs(),
         })) {
