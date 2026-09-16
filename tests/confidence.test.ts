@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assessConfidence, THRESHOLD_VERIFIED } from '@/lib/confidence/score';
+import { assessConfidence, THRESHOLD_CONFIRMED } from '@/lib/confidence/score';
 import { commonNamePenalty, MAX_COMMON_NAME_PENALTY } from '@/lib/confidence/names';
 
 /**
@@ -22,13 +22,13 @@ describe('name-only findings', () => {
     expect(result.cappedBy).toMatch(/name alone/i);
   });
 
-  it('stays capped even when the raw score clears the verified threshold', () => {
+  it('stays capped even when the raw score clears the confirmed threshold', () => {
     const result = assessConfidence({
-      signals: ['verified_email_exact', 'name_exact'],
+      signals: ['email_exact', 'name_exact'],
       nameOnly: true,
     });
 
-    expect(result.score).toBeGreaterThanOrEqual(THRESHOLD_VERIFIED);
+    expect(result.score).toBeGreaterThanOrEqual(THRESHOLD_CONFIRMED);
     expect(result.level).toBe('possible');
   });
 });
@@ -45,9 +45,9 @@ describe('username-only findings', () => {
     expect(result.cappedBy).toMatch(/username/i);
   });
 
-  it('rises to "likely" — but not "verified" — once corroborated', () => {
+  it('rises to "likely" — but never "confirmed" — once corroborated', () => {
     const result = assessConfidence({
-      signals: ['username_exact', 'gravatar_linked_account', 'profile_corroborates_email'],
+      signals: ['username_exact', 'linked_account_verified', 'profile_corroborates_email'],
       nameOnly: false,
       usernameOnly: true,
     });
@@ -56,17 +56,40 @@ describe('username-only findings', () => {
   });
 });
 
-describe('the verified level', () => {
-  it('requires a match on the address the person proved they own', () => {
-    const notVerified = assessConfidence({
-      signals: ['email_exact', 'profile_corroborates_email'],
+describe('the confirmed level', () => {
+  it('is reached by an exact match on an identifier that was entered', () => {
+    const exact = assessConfidence({ signals: ['email_exact'], nameOnly: false });
+    expect(exact.level).toBe('confirmed');
+
+    const hashed = assessConfidence({ signals: ['email_hash_exact'], nameOnly: false });
+    expect(hashed.level).toBe('confirmed');
+  });
+
+  it('cannot be reached by weak signals accumulating', () => {
+    const accumulated = assessConfidence({
+      signals: [
+        'profile_corroborates_email',
+        'profile_corroborates_name',
+        'linked_account_verified',
+      ],
       nameOnly: false,
     });
-    expect(notVerified.level).toBe('likely');
-    expect(notVerified.cappedBy).toMatch(/confirmed email/i);
 
-    const verified = assessConfidence({ signals: ['verified_email_exact'], nameOnly: false });
-    expect(verified.level).toBe('verified');
+    expect(accumulated.score).toBeGreaterThanOrEqual(THRESHOLD_CONFIRMED);
+    expect(accumulated.level).toBe('likely');
+    expect(accumulated.cappedBy).toMatch(/exactly/i);
+  });
+
+  it('describes the match only, and says nothing about who owns the address', () => {
+    // A breach really does contain the address that was typed. Whether that
+    // address belongs to the person typing it is a separate question, answered
+    // once at the top of the report rather than folded in here.
+    const result = assessConfidence({ signals: ['email_exact'], nameOnly: false });
+
+    expect(result.level).toBe('confirmed');
+    expect(result.signals.map((item) => item.explanation).join(' ')).toMatch(
+      /exact email address you entered/i,
+    );
   });
 });
 
@@ -78,13 +101,13 @@ describe("the person's own verdict", () => {
       userVerdict: 'confirmed',
     });
 
-    expect(result.level).toBe('verified');
+    expect(result.level).toBe('confirmed');
     expect(result.signals.some((signal) => signal.id === 'user_confirmed')).toBe(true);
   });
 
   it('sets a result aside when they reject it', () => {
     const result = assessConfidence({
-      signals: ['verified_email_exact'],
+      signals: ['email_exact'],
       nameOnly: false,
       userVerdict: 'rejected',
     });

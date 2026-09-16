@@ -3,6 +3,7 @@ import { buildIdentity, looksLikeEmail, normalizeEmail } from '@/lib/identity';
 import { logger } from '@/lib/logger';
 import { runScan, scanBudgetMs, type ScanEvent } from '@/lib/orchestrator';
 import { checkRateLimit, clientIp, RULES } from '@/lib/ratelimit';
+import { requireEmailVerification } from '@/lib/config';
 import { isVerified } from '@/lib/verification';
 
 /**
@@ -48,9 +49,14 @@ export async function POST(request: Request): Promise<Response> {
   const { email, name, username, locality } = parsed.data;
   if (!looksLikeEmail(email)) return errorStream('That does not look like an email address.', 400);
 
-  // Verification is not optional. It is what keeps this a tool for checking
-  // your own exposure rather than for looking up other people.
-  if (!(await isVerified(email))) {
+  // Verification is off by default, because requiring it means paying for an
+  // email service. When it is off, ownership is asserted rather than proved, and
+  // two things compensate: results from sensitive categories are withheld
+  // entirely, and the report carries a standing caveat. See lib/config.ts.
+  const verificationRequired = requireEmailVerification();
+  const emailVerified = verificationRequired ? await isVerified(email) : false;
+
+  if (verificationRequired && !emailVerified) {
     return errorStream('Verify your email address before scanning.', 403);
   }
 
@@ -90,7 +96,7 @@ export async function POST(request: Request): Promise<Response> {
       try {
         for await (const event of runScan({
           identity,
-          emailVerified: true,
+          emailVerified,
           declinedSources,
           budgetMs: scanBudgetMs(),
         })) {
@@ -105,7 +111,8 @@ export async function POST(request: Request): Promise<Response> {
               type: 'scan_complete',
               coverage: [],
               partial: true,
-              counts: { findings: 0, removalOpportunities: 0 },
+              ownershipAsserted: !emailVerified,
+              counts: { findings: 0, removalOpportunities: 0, withheld: 0 },
             }),
           );
         }

@@ -36,8 +36,8 @@ export type SourceStatus =
   | 'skipped';
 
 export type SourceOutcome =
-  | { status: 'ok'; checked?: number }
-  | { status: 'partial'; checked: number; total: number; reason: string }
+  | { status: 'ok'; checked?: number; withheld?: number }
+  | { status: 'partial'; checked: number; total: number; reason: string; withheld?: number }
   | { status: 'failed'; reason: string }
   | { status: 'not_configured'; missing: string[] }
   | { status: 'rate_limited'; retryAfterSeconds?: number }

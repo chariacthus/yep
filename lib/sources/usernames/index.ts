@@ -3,6 +3,7 @@ import { assessConfidence } from '../../confidence/score';
 import type { Finding } from '../../normalize/finding';
 import type { SignalId } from '../../confidence/signals';
 import type { Emit, ScanContext, Source, SourceOutcome } from '../types';
+import { HOSTS_WITH_DEDICATED_SOURCES } from '../registry';
 import { probeAll } from './prober';
 import { prepareSites } from './wmn';
 
@@ -54,7 +55,13 @@ export const usernameSource: Source = {
     }
 
     const handle = reveal(context.identity.username);
-    const sites = prepareSites();
+
+    // A dedicated adapter reports these hosts in far more detail, so letting the
+    // sweep report them as well would duplicate every one of them with a worse
+    // version of the same finding.
+    const sites = prepareSites().filter(
+      (site) => !HOSTS_WITH_DEDICATED_SOURCES.has(site.host.replace(/^www\./, '')),
+    );
     const total = sites.length;
 
     let completed = 0;
@@ -63,6 +70,9 @@ export const usernameSource: Source = {
     // signature tells us nothing. Counting these separately is what stops the
     // sweep reporting a clean result when it was in fact blocked everywhere.
     let indeterminate = 0;
+    // Matches found but not returned because the category is revealing and
+    // ownership was never proved. Counted so the report can say so.
+    let withheld = 0;
 
     const results = probeAll(sites, handle, {
       concurrency: concurrency(),
@@ -86,12 +96,16 @@ export const usernameSource: Source = {
         site.host.replace(/^www\./, ''),
       );
 
-      // Sensitive categories can out somebody. They are withheld entirely until
-      // the address has been verified, and the UI keeps them behind a reveal.
-      if (site.sensitive && !context.emailVerified) continue;
+      // Sensitive categories can out somebody. Nobody should be able to type a
+      // stranger's username and learn which dating or adult sites they use, so
+      // these are withheld entirely unless ownership has actually been proved.
+      if (site.sensitive && !context.emailVerified) {
+        withheld += 1;
+        continue;
+      }
 
       const signals: SignalId[] = ['username_exact'];
-      if (corroborated) signals.push('gravatar_linked_account');
+      if (corroborated) signals.push('linked_account_verified');
       if (site.unreliable) signals.push('low_reliability_source');
 
       emit.finding({
@@ -144,6 +158,7 @@ export const usernameSource: Source = {
         status: 'partial',
         checked: conclusive,
         total,
+        withheld,
         reason:
           'The scan reached its time limit before every site could be checked. The sites not reached are unknown, not clear.',
       };
@@ -157,11 +172,12 @@ export const usernameSource: Source = {
         status: 'partial',
         checked: conclusive,
         total,
+        withheld,
         reason:
           `${indeterminate} of ${total} sites did not give a usable answer — they blocked us, timed out, or changed their pages. Those sites are unknown, not clear.`,
       };
     }
 
-    return { status: 'ok', checked: conclusive };
+    return { status: 'ok', checked: conclusive, withheld };
   },
 };

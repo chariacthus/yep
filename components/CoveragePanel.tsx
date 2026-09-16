@@ -1,40 +1,42 @@
 'use client';
 
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useState } from 'react';
 import type { CoverageEntry } from '@/lib/orchestrator';
 import type { SourceStatus } from '@/lib/sources/types';
+import { Counter } from './Counter';
 
 /**
  * What was checked, and what was not.
  *
- * This panel is the honesty of the product made visible. A scan that could not
- * reach four of its sources has not "found nothing" — it has not looked — and
- * saying so plainly matters more than a clean-looking report.
+ * This is the honesty of the product made visible. A scan that could not reach
+ * four of its sources has not "found nothing" — it has not looked — and saying
+ * so plainly matters more than a clean-looking report.
  */
 
 const STATUS_LABELS: Record<SourceStatus, string> = {
-  pending: 'Waiting',
-  running: 'Checking…',
-  ok: 'Checked',
-  partial: 'Partly checked',
-  failed: 'Could not check',
-  not_configured: 'Not set up',
-  rate_limited: 'Rate-limited',
-  skipped: 'Not checked',
+  pending: 'queued',
+  running: 'running',
+  ok: 'checked',
+  partial: 'partial',
+  failed: 'unreachable',
+  not_configured: 'not set up',
+  rate_limited: 'rate-limited',
+  skipped: 'not checked',
 };
 
 const STATUS_TONE: Record<SourceStatus, string> = {
-  pending: 'text-faint',
+  pending: 'text-faint/60',
   running: 'text-accent',
   ok: 'text-muted',
-  partial: 'text-likely',
-  failed: 'text-verified',
+  partial: 'text-alarm',
+  failed: 'text-alarm',
   not_configured: 'text-faint',
-  rate_limited: 'text-likely',
+  rate_limited: 'text-alarm',
   skipped: 'text-faint',
 };
 
-const INCOMPLETE: SourceStatus[] = ['partial', 'failed', 'not_configured', 'rate_limited', 'skipped'];
+const INCOMPLETE: SourceStatus[] = ['partial', 'failed', 'rate_limited', 'not_configured'];
 
 export function CoveragePanel({
   coverage,
@@ -47,90 +49,125 @@ export function CoveragePanel({
   scanning?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const reduced = useReducedMotion();
+
   const expanded = open || scanning;
   const incomplete = coverage.filter((entry) => INCOMPLETE.includes(entry.status));
   const checked = coverage.filter((entry) => entry.status === 'ok').length;
   const running = coverage.filter((entry) => entry.status === 'running').length;
-  // "Done" during a scan means settled either way, not succeeded — a source
-  // that failed has finished, and pretending otherwise stalls the counter.
+  // "Done" during a scan means settled either way, not succeeded — a source that
+  // failed has finished, and pretending otherwise stalls the counter.
   const settled = coverage.filter(
     (entry) => entry.status !== 'pending' && entry.status !== 'running',
   ).length;
 
   return (
-    <section className="card">
+    <section className="rule">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={expanded}
         disabled={scanning}
-        className="flex w-full items-center justify-between gap-3 p-4 text-left disabled:cursor-default"
+        className="flex w-full items-baseline justify-between gap-4 py-4 text-left disabled:cursor-default"
       >
-        <span>
-          <span className="block text-sm font-medium text-ink">
-            {scanning
-              ? `Checking ${running} source${running === 1 ? '' : 's'}…`
-              : `Checked ${checked} of ${coverage.length} sources`}
-          </span>
+        <span className="tag">
           {scanning ? (
-            <span className="mt-0.5 block text-sm text-muted">
-              {settled} of {coverage.length} done
-            </span>
-          ) : incomplete.length > 0 ? (
-            <span className="mt-0.5 block text-sm text-muted">
-              {incomplete.length} could not be checked — see what that means
-            </span>
+            <>
+              Checking {running} source{running === 1 ? '' : 's'}
+            </>
           ) : (
-            <span className="mt-0.5 block text-sm text-muted">Every source responded</span>
+            'Coverage'
           )}
         </span>
-        {!scanning ? (
-          <span aria-hidden className="text-faint">
-            {expanded ? '−' : '+'}
+        <span className="flex items-baseline gap-3">
+          <span className="font-mono text-xs text-muted">
+            <Counter value={scanning ? settled : checked} className="text-ink" /> / {coverage.length}
+            {scanning ? ' done' : ' checked'}
           </span>
-        ) : null}
+          {!scanning && incomplete.length > 0 ? (
+            <span className="font-mono text-xs text-alarm">{incomplete.length} not checked</span>
+          ) : null}
+          {!scanning ? (
+            <span aria-hidden className="tag">
+              {expanded ? '−' : '+'}
+            </span>
+          ) : null}
+        </span>
       </button>
 
-      {expanded ? (
-        <ul className="divide-y divide-line border-t border-line">
-          {coverage.map((entry) => {
-            const live = progress[entry.id];
-            return (
-              <li key={entry.id} className="flex items-start justify-between gap-4 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm text-ink">{entry.label}</p>
-                  <p className="mt-0.5 text-sm text-muted">{entry.detail ?? entry.description}</p>
-                  {entry.status === 'partial' && entry.checked !== undefined && entry.total ? (
-                    <p className="mt-0.5 text-sm text-likely">
-                      Reached {entry.checked} of {entry.total}. The rest are unknown, not clear.
-                    </p>
-                  ) : null}
-                </div>
-                <span className={`shrink-0 text-right text-xs ${STATUS_TONE[entry.status]}`}>
-                  {live && entry.status === 'running' ? (
-                    <>
-                      <span className="tabular-nums">
-                        {live.done} / {live.total}
-                      </span>
-                      <span
-                        aria-hidden
-                        className="mt-1 block h-1 w-24 overflow-hidden rounded-full bg-raised"
-                      >
-                        <span
-                          className="block h-full bg-accent transition-[width] duration-300"
-                          style={{ width: `${Math.round((live.done / Math.max(1, live.total)) * 100)}%` }}
-                        />
-                      </span>
-                    </>
-                  ) : (
-                    STATUS_LABELS[entry.status]
-                  )}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {expanded ? (
+          <motion.div
+            key="list"
+            initial={reduced ? false : { height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={reduced ? undefined : { height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <ul className="border-t border-rule/60 pb-4">
+              {coverage.map((entry) => {
+                const live = progress[entry.id];
+                const isRunning = entry.status === 'running';
+
+                return (
+                  <motion.li
+                    key={entry.id}
+                    layout={reduced ? false : 'position'}
+                    className="grid grid-cols-[1fr_auto] items-baseline gap-4 border-b border-rule/40 py-2.5 last:border-b-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-ink">{entry.label}</p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-faint">
+                        {entry.detail ?? entry.description}
+                      </p>
+                      {entry.status === 'partial' && entry.checked !== undefined && entry.total ? (
+                        <p className="mt-0.5 font-mono text-xs text-alarm">
+                          reached {entry.checked} of {entry.total} — the rest are unknown, not clear
+                        </p>
+                      ) : null}
+                      {entry.withheld ? (
+                        <p className="mt-0.5 font-mono text-xs text-alarm">
+                          {entry.withheld} result{entry.withheld === 1 ? '' : 's'} withheld from a
+                          sensitive category
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      {live && isRunning ? (
+                        <>
+                          <span className="font-mono text-xs text-accent">
+                            <Counter value={live.done} /> / {live.total}
+                          </span>
+                          <span
+                            aria-hidden
+                            className="mt-1 block h-px w-24 overflow-hidden bg-rule"
+                          >
+                            <motion.span
+                              className="block h-full bg-accent"
+                              initial={false}
+                              animate={{
+                                width: `${Math.round((live.done / Math.max(1, live.total)) * 100)}%`,
+                              }}
+                              transition={{ duration: 0.4, ease: 'easeOut' }}
+                            />
+                          </span>
+                        </>
+                      ) : (
+                        <span className={`tag ${STATUS_TONE[entry.status]}`}>
+                          {STATUS_LABELS[entry.status]}
+                          {isRunning ? <span className="ml-1 animate-pulse">●</span> : null}
+                        </span>
+                      )}
+                    </div>
+                  </motion.li>
+                );
+              })}
+            </ul>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </section>
   );
 }

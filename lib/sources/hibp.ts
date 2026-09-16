@@ -77,7 +77,7 @@ function toFinding(breach: HibpBreach, emailVerified: boolean): Finding {
   const includesCredentials = dataTypes.includes('password_credential');
 
   const confidence = assessConfidence({
-    signals: [emailVerified ? 'verified_email_exact' : 'email_exact'],
+    signals: ['email_exact'],
     nameOnly: false,
   });
 
@@ -209,21 +209,26 @@ export const hibpSource: Source = {
 
       const byName = new Map(catalogue.map((breach) => [breach.Name.toLowerCase(), breach]));
       let emitted = 0;
+      let withheld = 0;
 
       for (const name of names) {
         const breach = byName.get(name.toLowerCase());
         if (!breach) continue;
 
-        // Sensitive breaches can out somebody. They are only ever surfaced to a
-        // person who has proved they own the address, and the UI keeps them
-        // collapsed behind an explicit reveal.
-        if (breach.IsSensitive && !context.emailVerified) continue;
+        // Sensitive breaches can out somebody — a leak from an affair site or a
+        // political forum is revealing merely by association. They are surfaced
+        // only to a person who has proved they own the address, and even then
+        // the UI keeps them behind an explicit reveal.
+        if (breach.IsSensitive && !context.emailVerified) {
+          withheld += 1;
+          continue;
+        }
 
         emit.finding(toFinding(breach, context.emailVerified));
         emitted += 1;
       }
 
-      return { status: 'ok', checked: emitted };
+      return { status: 'ok', checked: emitted, withheld };
     } catch (error) {
       if (error instanceof HttpError && error.status === 429) {
         return { status: 'rate_limited', retryAfterSeconds: error.retryAfterSeconds };

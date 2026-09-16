@@ -60,7 +60,7 @@ function buildQueries(context: ScanContext): Query[] {
 function signalsFor(basis: Query['basis'], emailVerified: boolean): SignalId[] {
   switch (basis) {
     case 'email':
-      return [emailVerified ? 'verified_email_exact' : 'email_exact'];
+      return ['email_exact'];
     case 'username':
       return ['username_exact'];
     case 'name_locality':

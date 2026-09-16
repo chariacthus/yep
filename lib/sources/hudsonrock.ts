@@ -62,7 +62,7 @@ function toFinding(record: StealerRecord, index: number, emailVerified: boolean)
       : undefined,
     dataTypes: ['email', 'password_credential', 'device_info'],
     confidence: assessConfidence({
-      signals: [emailVerified ? 'verified_email_exact' : 'email_exact'],
+      signals: ['email_exact'],
       nameOnly: false,
     }),
     whyItMatters:

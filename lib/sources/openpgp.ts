@@ -49,7 +49,7 @@ export const openPgpSource: Source = {
         origin: { name: 'keys.openpgp.org', domain: 'keys.openpgp.org' },
         dataTypes: ['email'],
         confidence: assessConfidence({
-          signals: [context.emailVerified ? 'verified_email_exact' : 'email_exact'],
+          signals: ['email_exact'],
           nameOnly: false,
         }),
         evidence: {

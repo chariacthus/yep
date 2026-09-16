@@ -2,6 +2,24 @@
 
 Read this before deploying publicly. Some of it is load-bearing.
 
+## Email verification is off by default
+
+`REQUIRE_EMAIL_VERIFICATION` defaults to `false`, so no address is ever proved to
+belong to the person entering it. This is a cost decision — requiring it means
+running a mail service — and it changes the legal posture, so it is recorded
+here rather than buried:
+
+- **Sensitive results are withheld from everyone.** HIBP's `IsSensitive`
+  breaches and the adult, dating, political and health username categories are
+  never returned while verification is off. The count of withheld results is
+  reported, so the omission is visible rather than silent.
+- **Commit-history email mining is not implemented**, though it would work and
+  would be useful. Without verification it would make this a tool for finding
+  other people's addresses.
+- **The affirmation checkbox** on the form is what the screening prohibition
+  rests on. It is weak, and it is deliberate that it is explicit.
+- **Turn verification on before enabling HIBP.** See below.
+
 ## Have I Been Pwned
 
 **Review the current [Terms of Use](https://haveibeenpwned.com/TermsOfUse) before
@@ -11,8 +29,9 @@ or search engine". Two design decisions in this codebase exist to stay on the
 right side of that, but they are not a substitute for reading the terms
 yourself, and getting written confirmation from HIBP is advisable:
 
-- **Every search is a self-search.** Email verification is mandatory, so the
-  service can only ever be run against an address the user controls.
+- **Every search should be a self-search.** Set
+  `REQUIRE_EMAIL_VERIFICATION=true` alongside `HIBP_API_KEY`, so the service can
+  only be run against an address the user controls.
 - **Nothing is cached.** `lib/sources/hibp.ts` holds results for the lifetime of
   one request. There is no store of breach-to-address mappings anywhere, because
   that store would be the prohibited thing.
@@ -62,14 +81,30 @@ automated access regardless; the concurrency and back-off settings exist to keep
 this within the bounds of courteous behaviour, and hosts can be excluded via
 `data/wmn-health.json`.
 
+## The keyless profile sources
+
+GitLab, Docker Hub, npm and Bitbucket are queried through their public,
+documented APIs with no authentication, at one request each per scan. Nothing is
+scraped and no rate limit is pressed.
+
+Addresses discovered on those public profiles are **masked** before they reach
+the report, unless they match the address being scanned. The profile is public
+either way, but returning the full address in a machine-readable report would
+make this a convenient harvester.
+
+PyPI is deliberately absent: its user pages answer HTTP 200 for every username,
+so an existence check there would report a false positive on every scan.
+
 ## Positioning
 
 A tool that finds information about a person can be mistaken for a
-background-check service, which in the US is FCRA territory. Two things keep
-this out of that category, and both must stay:
+background-check service, which in the US is FCRA territory. Three things keep
+this out of that category, and all must stay:
 
-1. Verification means it only ever runs on the user's own address.
-2. The terms shown in the footer prohibit use for employment, tenancy and credit
+1. The affirmation checkbox, and — where verification is enabled — proof that
+   the address belongs to the user.
+2. Sensitive-category results are withheld while ownership is unproved.
+3. The terms shown in the footer prohibit use for employment, tenancy and credit
    screening.
 
 ## Data protection

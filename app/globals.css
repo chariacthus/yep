@@ -3,72 +3,91 @@
 @tailwind utilities;
 
 /**
- * One restrained palette. Confidence is communicated through a small set of
- * deliberate colours; everything else is neutral, because a report about
- * somebody's exposed personal data should not look like a marketing dashboard.
+ * Dossier.
+ *
+ * The visual model is a case file, not a dashboard: a dark ground, hairline
+ * rules instead of card borders, monospace for anything the eye should read as
+ * data, and exactly one accent colour used sparingly enough that it still means
+ * something when it appears.
+ *
+ * Deliberately absent: rounded cards, drop shadows, gradients, coloured status
+ * pills. Hierarchy comes from type scale, weight and space.
  */
 :root {
-  --canvas: 250 250 249;
-  --surface: 255 255 255;
-  --raised: 245 245 244;
-  --line: 231 229 228;
-  --ink: 28 25 23;
-  --muted: 87 83 78;
-  --faint: 120 113 108;
-  --accent: 15 76 129;
-  --accent-ink: 255 255 255;
-  --verified: 153 27 27;
-  --likely: 146 64 14;
-  --possible: 87 83 78;
+  /* Dark is the primary theme; the light values below are the fallback. */
+  --canvas: 10 10 9;
+  --surface: 18 17 16;
+  --raised: 28 27 25;
+  --rule: 48 46 43;
+  --rule-strong: 72 69 64;
+  --ink: 240 238 234;
+  --muted: 163 158 150;
+  --faint: 118 113 106;
+  --accent: 214 112 62;
+  --accent-ink: 12 11 10;
+  --alarm: 214 112 62;
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: var(--font-instrument-serif), Georgia, serif;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --canvas: 12 12 11;
-    --surface: 24 24 22;
-    --raised: 35 34 32;
-    --line: 60 58 55;
-    --ink: 245 245 244;
-    --muted: 168 162 158;
-    --faint: 138 132 128;
-    --accent: 125 184 235;
-    --accent-ink: 12 12 11;
-    --verified: 248 150 150;
-    --likely: 240 186 120;
-    --possible: 168 162 158;
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --canvas: 247 245 241;
+    --surface: 252 251 249;
+    --raised: 238 235 229;
+    --rule: 214 209 200;
+    --rule-strong: 176 170 159;
+    --ink: 26 24 22;
+    --muted: 88 83 77;
+    --faint: 129 123 114;
+    --accent: 168 74 32;
+    --accent-ink: 252 251 249;
+    --alarm: 154 52 24;
   }
 }
 
-:root[data-theme='dark'] {
-  --canvas: 12 12 11;
-  --surface: 24 24 22;
-  --raised: 35 34 32;
-  --line: 60 58 55;
-  --ink: 245 245 244;
-  --muted: 168 162 158;
-  --faint: 138 132 128;
-  --accent: 125 184 235;
-  --accent-ink: 12 12 11;
-  --verified: 248 150 150;
-  --likely: 240 186 120;
-  --possible: 168 162 158;
+:root[data-theme='light'] {
+  --canvas: 247 245 241;
+  --surface: 252 251 249;
+  --raised: 238 235 229;
+  --rule: 214 209 200;
+  --rule-strong: 176 170 159;
+  --ink: 26 24 22;
+  --muted: 88 83 77;
+  --faint: 129 123 114;
+  --accent: 168 74 32;
+  --accent-ink: 252 251 249;
+  --alarm: 154 52 24;
 }
 
 html {
-  color-scheme: light dark;
+  color-scheme: dark light;
 }
 
 body {
   background-color: rgb(var(--canvas));
   color: rgb(var(--ink));
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Figures line up in columns; a report is full of them. */
+.tabular,
+input,
+time {
+  font-variant-numeric: tabular-nums;
 }
 
 *:focus-visible {
-  outline: 2px solid rgb(var(--accent));
-  outline-offset: 2px;
+  outline: 1px solid rgb(var(--accent));
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgb(var(--accent) / 0.28);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -82,25 +101,66 @@ body {
 }
 
 @layer components {
+  /* A small uppercase monospace label. Does most of the typographic work. */
+  .tag {
+    @apply font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-faint;
+  }
+
+  .tag-accent {
+    @apply tag text-accent;
+  }
+
+  /* The index number in an entry's left gutter. */
+  .index {
+    @apply font-mono text-[0.6875rem] tabular-nums tracking-[0.1em] text-faint;
+  }
+
+  .display {
+    font-family: var(--font-display);
+    @apply font-normal leading-[1.05] tracking-[-0.01em];
+  }
+
   .field {
-    @apply w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-ink
-      placeholder:text-faint focus:border-accent focus:outline-none;
+    @apply w-full border-0 border-b border-rule bg-transparent px-0 py-2.5
+      font-sans text-ink placeholder:text-faint/70
+      focus:border-accent focus:outline-none;
+    transition: border-color 160ms ease;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5
-      text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 font-mono text-[0.6875rem]
+      uppercase tracking-[0.14em] transition-colors
+      disabled:cursor-not-allowed disabled:opacity-40;
   }
 
   .btn-primary {
-    @apply btn bg-accent text-accent-ink hover:opacity-90;
+    @apply btn bg-accent px-5 py-3 text-accent-ink hover:bg-accent/90;
   }
 
   .btn-quiet {
-    @apply btn border border-line bg-surface text-ink hover:bg-raised;
+    @apply btn border border-rule px-4 py-2.5 text-muted hover:border-rule-strong hover:text-ink;
   }
 
-  .card {
-    @apply rounded-xl border border-line bg-surface;
+  /* The hairline that separates entries. Replaces every card border. */
+  .rule {
+    @apply border-t border-rule;
   }
+}
+
+/* The scanning feed's cursor. */
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.cursor::after {
+  content: '▌';
+  animation: blink 1.1s steps(1) infinite;
+  color: rgb(var(--accent));
 }

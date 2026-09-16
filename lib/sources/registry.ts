@@ -4,6 +4,11 @@ import { hudsonRockSource } from './hudsonrock';
 import { gravatarSource } from './gravatar';
 import { openPgpSource } from './openpgp';
 import { githubSource } from './github';
+import { gitlabSource } from './gitlab';
+import { bitbucketSource } from './bitbucket';
+import { dockerHubSource } from './dockerhub';
+import { npmSource } from './npm';
+import { emailDomainSource } from './email-domain';
 import { waybackSource } from './wayback';
 import { usernameSource } from './usernames';
 import { brokerSource } from './brokers';
@@ -13,24 +18,59 @@ import type { Source } from './types';
 /**
  * Every source the scanner knows about.
  *
- * Order matters in one respect: Gravatar runs early because the accounts it
- * verifies are used to corroborate later username matches.
+ * Order matters in one respect: the priming sources run first, because the
+ * accounts they verify are used to corroborate later username matches.
  */
 export const SOURCES: readonly Source[] = [
   gravatarSource,
+  gitlabSource,
   hibpSource,
   xposedOrNotSource,
   hudsonRockSource,
   openPgpSource,
+  emailDomainSource,
   githubSource,
+  bitbucketSource,
+  dockerHubSource,
+  npmSource,
   waybackSource,
   braveSearchSource,
   usernameSource,
   brokerSource,
 ];
 
-/** Sources that run before the rest, because others depend on what they learn. */
-export const PRIMING_SOURCE_IDS: readonly string[] = ['gravatar'];
+/**
+ * Sources that run to completion before the rest.
+ *
+ * Gravatar and GitLab can both prove that a specific account belongs to the
+ * address being scanned, and publish that to `context.corroboration`. Running
+ * them first means a later username match on one of those hosts is scored as
+ * corroborated rather than as a bare coincidence.
+ */
+export const PRIMING_SOURCE_IDS: readonly string[] = ['gravatar', 'gitlab'];
+
+/**
+ * Hosts a dedicated source already covers.
+ *
+ * The WhatsMyName sweep checks these sites too, but a dedicated adapter returns
+ * far more — a published email address, a real name, a package count — so a bare
+ * "an account exists here" from the sweep is strictly worse information about
+ * the same fact. The sweep skips them rather than reporting each site twice.
+ *
+ * Known at build time, so this needs no coordination between concurrent sources.
+ */
+export const HOSTS_WITH_DEDICATED_SOURCES: ReadonlySet<string> = new Set([
+  'github.com',
+  'gitlab.com',
+  'bitbucket.org',
+  'hub.docker.com',
+  'docker.com',
+  'npmjs.com',
+  'www.npmjs.com',
+  'gravatar.com',
+  'en.gravatar.com',
+  'keys.openpgp.org',
+]);
 
 export function sourceById(id: string): Source | undefined {
   return SOURCES.find((source) => source.id === id);

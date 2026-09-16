@@ -95,7 +95,7 @@ function toFinding(detail: BreachDetail, emailVerified: boolean): Finding | null
     occurredAt: Number.isFinite(year) ? { year, precision: 'year' } : undefined,
     dataTypes,
     confidence: assessConfidence({
-      signals: [emailVerified ? 'verified_email_exact' : 'email_exact'],
+      signals: ['email_exact'],
       nameOnly: false,
     }),
     evidence: { url: 'https://xposedornot.com', label: 'About this index' },

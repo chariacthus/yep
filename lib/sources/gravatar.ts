@@ -100,7 +100,7 @@ export const gravatarSource: Source = {
         origin: { name: 'Gravatar', domain: 'gravatar.com' },
         dataTypes: exposed,
         confidence: assessConfidence({
-          signals: ['email_hash_exact', context.emailVerified ? 'verified_email_exact' : 'email_exact'],
+          signals: ['email_hash_exact', 'email_exact'],
           nameOnly: false,
         }),
         evidence: profile.profile_url
@@ -134,7 +134,7 @@ export const gravatarSource: Source = {
           origin: { name: account.service_label ?? host ?? 'Linked account', domain: host ?? undefined },
           dataTypes: ['social_profile', 'username'],
           confidence: assessConfidence({
-            signals: ['gravatar_linked_account', 'email_hash_exact'],
+            signals: ['linked_account_verified', 'email_hash_exact'],
             nameOnly: false,
           }),
           evidence: account.url ? { url: account.url, label: 'Open the linked profile' } : undefined,

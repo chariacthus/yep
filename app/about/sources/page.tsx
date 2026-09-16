@@ -20,54 +20,47 @@ export const metadata = {
  */
 export default function SourcesPage() {
   return (
-    <div className="mx-auto max-w-readable space-y-10 px-4 py-12">
-      <header className="space-y-3">
-        <h1 className="text-2xl font-semibold tracking-tight">What we check, and what we cannot</h1>
-        <p className="leading-relaxed text-muted">
+    <div className="max-w-readable space-y-12 py-12">
+      <header>
+        <p className="tag-accent">Method</p>
+        <h1 className="display mt-4 text-4xl">What we check, and what we cannot</h1>
+        <p className="mt-5 leading-relaxed text-muted">
           No service can search the whole internet, and this one does not pretend to. It queries a
           specific set of sources, each with its own coverage and limits. Everything below reflects
           how this particular deployment is configured right now.
         </p>
       </header>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold tracking-tight">Sources</h2>
-        <ul className="space-y-2">
+      <section>
+        <h2 className="display text-2xl">Sources</h2>
+        <ul className="mt-4">
           {SOURCES.map((source) => {
             const configured = isConfigured(source);
             return (
-              <li key={source.id} className="card p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-ink">{source.label}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted">{source.description}</p>
-                    <p className="mt-2 text-xs text-faint">
-                      Needs: {source.requires.join(', ')} ·{' '}
-                      {source.sendsRawEmail
-                        ? 'receives your email address'
-                        : 'does not receive your email address'}
-                    </p>
-                    {!configured ? (
-                      <p className="mt-1 text-xs text-faint">
-                        Not set up here (missing {missingEnv(source).join(', ')})
-                      </p>
-                    ) : null}
-                  </div>
-                  <span
-                    className={`shrink-0 text-xs ${configured ? 'text-muted' : 'text-faint'}`}
-                  >
-                    {configured ? 'Active' : 'Not set up'}
-                  </span>
+              <li key={source.id} className="rule flex items-start justify-between gap-6 py-4">
+                <div className="min-w-0">
+                  <p className="text-[0.9375rem] text-ink">{source.label}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted">{source.description}</p>
+                  <p className="mt-2 font-mono text-[0.6875rem] text-faint">
+                    needs {source.requires.join(' + ')} ·{' '}
+                    {source.sendsRawEmail
+                      ? 'receives your email address'
+                      : 'never receives your email address'}
+                    {!configured ? ` · missing ${missingEnv(source).join(', ')}` : ''}
+                  </p>
                 </div>
+                <span className={`tag shrink-0 ${configured ? 'text-accent' : 'text-faint'}`}>
+                  {configured ? 'active' : 'not set up'}
+                </span>
               </li>
             );
           })}
         </ul>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold tracking-tight">What we deliberately do not use</h2>
-        <ul className="space-y-2 text-sm leading-relaxed text-muted">
+      <section>
+        <h2 className="display text-2xl">What we deliberately do not use</h2>
+        <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
           <li>
             <strong className="text-ink">Services that return plaintext passwords</strong> — such as
             Dehashed or Snusbase. This tool never handles credentials, even yours, so a source whose
@@ -91,12 +84,41 @@ export default function SourcesPage() {
             It breaks their terms, and it would mean searching for a named person — so broker
             entries are presented as removal opportunities, never as detections.
           </li>
+          <li>
+            <strong className="text-ink">Mining public commit history for email addresses.</strong>{' '}
+            Code-hosting platforms expose the address attached to every public commit. It would be a
+            genuinely useful finding, and it is also precisely what an email harvester would want.
+            Since this deployment does not verify that you own the address you enter, building it
+            would make this a tool for finding other people&apos;s addresses. Excluded.
+          </li>
         </ul>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold tracking-tight">Data broker directory</h2>
-        <p className="text-sm leading-relaxed text-muted">
+      <section>
+        <h2 className="display text-2xl">Tried and rejected</h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted">
+          Sources we built against and then dropped, because testing showed they could not give an
+          honest answer.
+        </p>
+        <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+          <li>
+            <strong className="text-ink">PyPI.</strong> Its user pages answer HTTP 200 for every
+            username, real or not, because they sit behind a bot challenge. A simple existence check
+            would have reported a match for every single person who ever ran a scan. There is no way
+            to tell a real account from a fictional one without solving the challenge, so it is not
+            used at all.
+          </li>
+          <li>
+            <strong className="text-ink">Sites that block automated requests outright.</strong> Where
+            a source cannot be reached from a server, it is not listed as a source. A check that
+            always fails quietly is worse than no check, because its silence reads as a clean result.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="display text-2xl">Data broker directory</h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted">
           {brokerDirectoryMeta.total} brokers, of which {brokerDirectoryMeta.californiaRegisteredCount}{' '}
           are in California&apos;s official registry.{' '}
           {brokerDirectoryMeta.californiaRegistryIncluded
@@ -105,9 +127,9 @@ export default function SourcesPage() {
         </p>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold tracking-tight">Credits and licences</h2>
-        <ul className="space-y-2 text-sm leading-relaxed text-muted">
+      <section>
+        <h2 className="display text-2xl">Credits and licences</h2>
+        <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
           <li>
             Breach data from{' '}
             <a
@@ -152,8 +174,8 @@ export default function SourcesPage() {
         </ul>
       </section>
 
-      <p className="text-sm">
-        <Link href="/" className="text-accent hover:underline">
+      <p className="rule pt-6">
+        <Link href="/" className="tag-accent hover:underline">
           ← Back to the scanner
         </Link>
       </p>

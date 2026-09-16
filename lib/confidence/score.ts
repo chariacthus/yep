@@ -15,7 +15,7 @@ import { commonNamePenalty } from './names';
  * must never commit is telling somebody "this is you" when it is not.
  */
 
-export const THRESHOLD_VERIFIED = 60;
+export const THRESHOLD_CONFIRMED = 60;
 export const THRESHOLD_LIKELY = 30;
 
 export interface ScoreInput {
@@ -31,7 +31,7 @@ export interface ScoreInput {
 }
 
 function levelFromScore(score: number): ConfidenceLevel {
-  if (score >= THRESHOLD_VERIFIED) return 'verified';
+  if (score >= THRESHOLD_CONFIRMED) return 'confirmed';
   if (score >= THRESHOLD_LIKELY) return 'likely';
   return 'possible';
 }
@@ -39,10 +39,9 @@ function levelFromScore(score: number): ConfidenceLevel {
 const CORROBORATING: ReadonlySet<SignalId> = new Set([
   'profile_corroborates_name',
   'profile_corroborates_email',
-  'gravatar_linked_account',
+  'linked_account_verified',
   'email_exact',
   'email_hash_exact',
-  'verified_email_exact',
 ]);
 
 export function assessConfidence(input: ScoreInput): ConfidenceAssessment {
@@ -80,25 +79,26 @@ export function assessConfidence(input: ScoreInput): ConfidenceAssessment {
     if (!corroborated) {
       level = 'possible';
       cappedBy = 'Nothing beyond the username itself links this account to you.';
-    } else if (level === 'verified') {
+    } else if (level === 'confirmed') {
       level = 'likely';
       cappedBy = 'Usernames are not unique, so this cannot be confirmed automatically.';
     }
   }
 
-  // Cap 3: "verified" is reserved for an exact match on the address the person
-  // proved they own, or their own explicit confirmation. Nothing else earns it.
-  const hasVerifiedIdentifier = input.signals.includes('verified_email_exact');
-  if (level === 'verified' && !hasVerifiedIdentifier) {
+  // Cap 3: only an exact match on an identifier that was actually entered can be
+  // "confirmed". Weak signals must not accumulate their way to certainty.
+  const hasExactIdentifier =
+    input.signals.includes('email_exact') || input.signals.includes('email_hash_exact');
+  if (level === 'confirmed' && !hasExactIdentifier) {
     level = 'likely';
-    cappedBy = 'Only a match on your confirmed email address counts as verified.';
+    cappedBy = 'Nothing here matched one of your identifiers exactly.';
   }
 
   // --- The person's own answer wins over everything. ---
   if (input.userVerdict === 'confirmed') {
     return {
-      level: 'verified',
-      score: Math.max(score, THRESHOLD_VERIFIED),
+      level: 'confirmed',
+      score: Math.max(score, THRESHOLD_CONFIRMED),
       signals: [...signals, signal('user_confirmed')],
       cappedBy: undefined,
     };

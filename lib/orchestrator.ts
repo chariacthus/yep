@@ -42,6 +42,13 @@ export interface CoverageEntry {
   because?: 'declined' | 'no_input';
   checked?: number;
   total?: number;
+  /**
+   * Results this source found but did not return, because they come from a
+   * category where being listed is itself revealing and ownership of the
+   * address was never proved. Counted so the report can say that results were
+   * withheld, rather than quietly omitting them.
+   */
+  withheld?: number;
 }
 
 export type ScanEvent =
@@ -54,7 +61,9 @@ export type ScanEvent =
       type: 'scan_complete';
       coverage: CoverageEntry[];
       partial: boolean;
-      counts: { findings: number; removalOpportunities: number };
+      /** True when identifiers were asserted rather than proved. */
+      ownershipAsserted: boolean;
+      counts: { findings: number; removalOpportunities: number; withheld: number };
     };
 
 export interface ScanOptions {
@@ -178,6 +187,7 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
 
   let findingCount = 0;
   let opportunityCount = 0;
+  let withheldCount = 0;
 
   const runSource = async (source: Source): Promise<void> => {
     const context: ScanContext = {
@@ -230,9 +240,12 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
     if (outcome.status === 'partial') {
       entry.checked = outcome.checked;
       entry.total = outcome.total;
+      entry.withheld = outcome.withheld;
     } else if (outcome.status === 'ok') {
       entry.checked = outcome.checked;
+      entry.withheld = outcome.withheld;
     }
+    if (entry.withheld) withheldCount += entry.withheld;
     coverage.set(source.id, entry);
 
     queue.push({
@@ -286,6 +299,7 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
     scanId,
     durationMs: Date.now() - started,
     findings: findingCount,
+    withheld: withheldCount,
     partial,
   });
 
@@ -293,6 +307,11 @@ export async function* runScan(options: ScanOptions): AsyncGenerator<ScanEvent> 
     type: 'scan_complete',
     coverage: entries,
     partial,
-    counts: { findings: findingCount, removalOpportunities: opportunityCount },
+    ownershipAsserted: !options.emailVerified,
+    counts: {
+      findings: findingCount,
+      removalOpportunities: opportunityCount,
+      withheld: withheldCount,
+    },
   };
 }
